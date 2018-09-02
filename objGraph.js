@@ -1,0 +1,355 @@
+
+const objGraph = (function(){
+
+    const ret = {};
+    function log(s){
+        //console.log(s);
+    }
+
+    class Extractor{
+        constructor(func){
+            this._func = func;
+        }
+
+        extract(o){
+            if( !o || typeof o == "undefined" ){
+                return [];
+            }
+            return this._func(o);
+        }
+    }
+    ret.Extractor = Extractor;
+    
+
+    class PropertiesExtractor extends Extractor{
+        constructor(names){
+            super( function(o){
+                const props = names.map(n => typeof o[n] != "undefined" ? [n,o[n]] : [] );
+                const filtered = props.filter( a => a.length != 0 );
+                return filtered;
+            });
+        }
+    }
+    ret.PropertiesExtractor = PropertiesExtractor;
+    
+
+
+    class OwnPropertiesExtractor extends Extractor{
+        constructor(names){
+            super( function(o){
+                return names.map(n => o.hasOwnProperty(n) ? [n,o[n]] : [] ).
+                    filter( a => a.length != 0 );
+            });
+        }
+    }
+    ret.OwnPropertiesExtractor = OwnPropertiesExtractor;
+
+    const PrototypeExtractor = new Extractor( o => [["[[prototype]]",Object.getPrototypeOf(o)]] );
+    ret.PrototypeExtractor = PrototypeExtractor;
+
+    const IndexedExtractor = new Extractor( function(o){
+        if( !(o instanceof Array) ){
+            return [];
+        }
+        const ret = [];
+        for( let i = 0 ; i < o.length ; i++ ){
+            ret.push( [i,o[i]] );
+        }
+        return ret;
+    });
+    ret.IndexedExtractor = IndexedExtractor;
+
+    const EnumerableOwnPropertiesExtractor = new Extractor(
+        function(o){
+            const props = Object.getOwnPropertyNames(o);
+            const obj = o;
+            const ret = [];
+            for( let i = 0 ; i < props.length ; i++ ){
+                const p = props[i];
+                try{
+                    ret.push([p,o[p]]);
+                }
+                catch(e){
+                    ret.push([p,e.toString()]);
+                }
+            }
+            return ret;
+        }
+    );
+    ret.EnumerableOwnPropertiesExtractor = EnumerableOwnPropertiesExtractor;
+
+    const EnumerablePropertiesExtractor = new Extractor(
+        function(o){
+            const props = Object.keys(o);
+            const obj = o;
+            const ret = [];
+            for( let i = 0 ; i < props.length ; i++ ){
+                const p = props[i];
+                try{
+                    ret.push([p,o[p]]);
+                }
+                catch(e){
+                    ret.push([p,e.toString()]);
+                }
+            }
+            return ret;
+        }
+    );
+    ret.EnumerablePropertiesExtractor = EnumerablePropertiesExtractor;
+    
+
+    class EdgeTo{
+        constructor(obj,name){
+            this._obj = obj;
+            this._name = name;
+        }
+        get obj(){
+            return this._obj;
+        }
+        get name(){
+            return this._name;
+        }
+    }
+
+    class AdjacencyList{
+        constructor(obj){
+            this._obj = obj;
+            this._edges = [];
+        }
+        
+        get obj(){
+            return this._obj;
+        }
+
+        get edges(){
+            return this._edges.slice(0);
+        }
+
+        edgeTo(o,name){
+            if( typeof o == "undefined" ){
+                return;
+            }
+            this._edges.push( new EdgeTo(o,name) );
+        }
+    }
+    ret.AdjacencyList = ret.AdjacencyList;
+
+    class Nominator{
+        constructor(func){
+            this._func = func;
+        }
+        nameOf(o){
+            return this._func(o);
+        }
+    }
+    ret.Nominator = Nominator;
+
+    const DefaultNominator = new Nominator( function(o){
+        if( o == null ){
+            return "null";
+        }
+        if( typeof o == "undefined" ){
+            return "undefined";
+        }
+        if( typeof o == "function" ){
+            if( o.name != "" ){
+                return "function:" + o.name;
+            }
+            return "anonymous function";
+        }
+        if( Object.prototype.hasOwnProperty.call(o,"constructor") && typeof o.constructor == "function" ){
+            return "prototype of:" + o.constructor.name;
+        }
+
+        let toString = null;
+        let toStringError = null;
+        try{
+            toString = String(o);
+        }
+        catch(e){
+            toStringError = e.toString();
+        }
+        
+        if( typeof o == "object" ){
+            if( toString && o.hasOwnProperty("toString") && typeof o.toString == "function" ){
+                return o.constructor.name + ":" + o.toString();
+            }
+            else{
+                return o.constructor.name;
+            }
+        }
+
+        return toString;
+    });
+    ret.DefaultNominator = DefaultNominator;
+
+    class ScopedNominator extends Nominator{
+
+        static makeFunction(scope){
+            return function(o){
+                for( let p in scope ){
+                    if( scope[p] === o ){
+                        return p;
+                    }
+                }
+                return DefaultNominator.nameOf(o);
+            };
+        }
+        
+        constructor(scope){
+            super( ScopedNominator.makeFunction(scope) );
+        }
+    };
+    ret.ScopedNominator = ScopedNominator;
+
+    class ObjGraph{
+
+        static scopeToArray(scope){
+            const ret = [];
+            for( let p in scope ){
+                ret.push(scope[p]);
+            }
+            return ret;
+        }
+
+        constructor(objects,extractors,nominator,filter,maxLevel){
+            this._objects = objects;
+            extractors = extractors;
+            for( let i = 0 ; i < extractors.length ; i++ ){
+                if( typeof extractors[i] == "string" ){
+                    extractors[i] = new PropertiesExtractor([extractors[i]]);
+                }
+            }
+            this._extractors = extractors;
+            this._nominator = nominator || DefaultNominator;
+            this._maxLevel = maxLevel || 4;
+            this._filter = filter || function(o){ return typeof o != "string"; };
+        }
+
+        get objects(){
+            return this._objects;
+        }
+
+        get extractors(){
+            return this._extractors;
+        }
+
+        get nominator(){
+            return this._nominator;
+        }
+
+        get filter(){
+            return this._filter;
+        }
+
+        get graph(){
+            if( this._graph ){
+                return this._graph;
+            }
+            this._graph = [];
+            this.objects.forEach( o => this.addToGraph(this._graph,o,0) );
+            return this._graph;
+        }
+
+        
+        addToGraph(graph,o,level){
+            if( level > this._maxLevel ){
+                return;
+            }
+            
+            if( typeof o == "undefined" ){
+                return;
+            }
+            
+            const g = this._graph;
+
+            const findOrInsert = function(o){
+                for( let i = 0 ; i < g.length ; i++ ){
+                    if( g[i].obj === o ){
+                        return null;
+                    }
+                }
+                const ret = new AdjacencyList(o);
+                g.push( ret );
+                return ret;
+            };
+
+            const list = findOrInsert(o);
+
+            const includeSubproperties = !this.filter || this.filter(o);
+
+            if( list && includeSubproperties ){
+                const newObjects = [];
+                this.extractors.map( function(e){
+                    e.extract(o).forEach( function(nameAndTo){
+                        if( nameAndTo ){
+                            const name = nameAndTo[0];
+                            const to = nameAndTo[1];
+                            list.edgeTo(to,name);
+                            newObjects.push(to);
+                        }
+                    });
+                });
+                newObjects.forEach(no => this.addToGraph(graph,no,level+1) );
+            }
+        }
+
+        dump(out){
+            const g = this.graph;
+            const n = this.nominator;
+            out("Graph:");
+            out("  Nodes:" + g.length );
+
+            g.forEach( function(list){
+                out("    Node:" + n.nameOf(list.obj) );
+                list.edges.forEach( function(edge){
+                    out( "      " + edge.name + ": " + n.nameOf(edge.obj) );
+                });
+            });
+        }
+
+        toDotFile(out){
+            const g = this.graph;
+            const n = this.nominator;
+
+            const find = function(o){
+                for( let i = 0 ; i < g.length ; i++ ){
+                    if( g[i].obj === o ){
+                        return i;
+                    }
+                }
+                return null;
+            };
+
+            
+            out("digraph{");
+            for( let i = 0 ; i < g.length ; i++ ){
+                out( "  node" + i + " [ label=\"" + n.nameOf(g[i].obj) + "\"];");
+            }
+
+            for( let i = 0 ; i < g.length ; i++ ){
+                const from = g[i].obj;
+                for( let j = 0 ; j < g[i].edges.length ; j++ ){
+                    const to = g[i].edges[j].obj;
+                    const toIndex = find(to);
+                    const label = g[i].edges[j].name;
+                    out( "  node" + i + " -> node" + toIndex + " [ label=\"" + label  + "\"];");
+                }
+            }
+            
+
+
+            out("}");
+        }
+    }
+
+    ret.ObjGraph = ObjGraph;
+    return ret;
+})();
+
+if( typeof module == "undefined" ){
+    module = {};
+}
+
+module.exports = objGraph;
+

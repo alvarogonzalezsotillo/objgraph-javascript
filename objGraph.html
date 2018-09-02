@@ -9,7 +9,7 @@
         <script type="text/javascript">
 	 mxBasePath = './mxgraph-3.9.8/javascript/src';
 	</script>
-        <script type="text/javascript" src="./mxgraph-3.9.8/javascript/mxClient.js"></script>
+        <script type="text/javascript" src="./mxgraph-3.9.8/javascript/mxClient.min.js"></script>
 
 
         <script>
@@ -40,9 +40,9 @@
 		     graph.getModel().beginUpdate();
 		     try
 		     {
-			 var v1 = graph.insertVertex(parent, null, 'Hello, 1234 5678 9012 3456', 20, 20, 80, 30 );
-			 var v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
-			 var v3 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
+			 var v1 = graph.insertVertex(parent, null, 'Hello, 1234 5678 9012 3456', 0, 0, 80, 30 );
+			 var v2 = graph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
+			 var v3 = graph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
 			 var e1 = graph.insertEdge(parent, null, 'edge', v1, v2);
 			 var e2 = graph.insertEdge(parent, null, 'edge', v3, v2);
 		     }
@@ -62,9 +62,14 @@
 
         </script>
 
-        <div id="graphContainer"
-	     style="position:relative;overflow:hidden;width:321px;height:241px;cursor:default;">
-	</div>
+        <style>
+         #graphContainer{
+             width: 100%;
+             height; 100%;
+         }
+        </style>
+        
+        <div id="graphContainer"/>
 
     </body>
 
