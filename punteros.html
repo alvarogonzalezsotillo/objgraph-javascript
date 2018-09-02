@@ -1,0 +1,72 @@
+<html>
+
+    <head>
+    </head>
+    
+    <body onload="main(document.getElementById('graphContainer'))">
+
+
+        <script type="text/javascript">
+	 mxBasePath = './mxgraph-3.9.8/javascript/src';
+	</script>
+        <script type="text/javascript" src="./mxgraph-3.9.8/javascript/mxClient.js"></script>
+
+
+        <script>
+	 function main(container)
+	 {
+	     // Checks if the browser is supported
+	     if (!mxClient.isBrowserSupported())
+		 {
+		     // Displays an error message if the browser is not supported.
+			 mxUtils.error('Browser is not supported!', 200, false);
+		 }
+	     else
+		 {
+		     // Disables the built-in context menu
+		     mxEvent.disableContextMenu(container);
+		     
+		     // Creates the graph inside the given container
+		     var graph = new mxGraph(container);
+
+		     // Enables rubberband selection
+		     // new mxRubberband(graph);
+		     
+		     // Gets the default parent for inserting new cells. This
+		     // is normally the first child of the root (ie. layer 0).
+			 var parent = graph.getDefaultParent();
+		     
+		     // Adds cells to the model in a single step
+		     graph.getModel().beginUpdate();
+		     try
+		     {
+			 var v1 = graph.insertVertex(parent, null, 'Hello, 1234 5678 9012 3456', 20, 20, 80, 30 );
+			 var v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
+			 var v3 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
+			 var e1 = graph.insertEdge(parent, null, 'edge', v1, v2);
+			 var e2 = graph.insertEdge(parent, null, 'edge', v3, v2);
+		     }
+		     finally
+		     {
+			 // Updates the display
+			 graph.getModel().endUpdate();
+		     }
+
+                     let layout = new mxHierarchicalLayout(graph);
+                     layout.execute(graph.getDefaultParent())
+		 }
+
+             mxUtils.error('Browser not supported!', 200, false);
+
+             
+	 };
+
+        </script>
+
+        <div id="graphContainer"
+	     style="position:relative;overflow:hidden;width:321px;height:241px;cursor:default;">
+	</div>
+
+    </body>
+
+</html>
