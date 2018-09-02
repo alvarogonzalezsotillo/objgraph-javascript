@@ -44,17 +44,18 @@
 
          with(objGraph){
              const config = {
-                 scope: new function(){
-                     this.array = [];
+                 scope: function(){
+                     const ret = {};
+                     ret.array = [];
                      for( let x = 0 ; x < 5 ; x++ ){
-                         this.array[x] = [];
+                         ret.array[x] = [];
                          for( let y = 0 ; y < 3 ; y++ ){
-                             this.array[x][y] = x+","+y;
+                             ret.array[x][y] = x+","+y;
                          }
                      }
-                     this.array.push("Hola Jaime");
+                     ret.array.push("Hola Jaime");
                  }(),
-                 extractors: [IndexedExtractor]
+                 extractors: [IndexedExxtractor]
              };
              createObjGraph(config).toMxGraph(mxgraph);
          }
@@ -68,9 +69,10 @@
          console.log(scope);
          with(objGraph){
              const config = {
-                 scope: objGraph,
-                 extractors: [IndexedExtractor,EnumerablePropertiesExtractor],
+                 scope: scope,
+                 extractors: [EnumerablePropertiesExtractor],
              };
+             mxgraph.getModel().clear();
              createObjGraph(config).toMxGraph(window.mxgraph);
 
              let layout = new mxHierarchicalLayout(window.mxgraph);
@@ -118,8 +120,8 @@
              graph.getModel().beginUpdate();
              try{
                  //fillTestGraph(graph);
-                 fillItself(graph);
-                 fillBidimensionalArray(graph);
+                 //fillItself(graph);
+                 //fillBidimensionalArray(graph);
              }
              finally{
                  // Updates the display
