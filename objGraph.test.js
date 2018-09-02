@@ -84,6 +84,15 @@ function bidimensionalArray(){
     }
 }
 
+function itself(){
+    const scope = objGraph;
+
+    with(objGraph){
+        const extractors = [PrototypeExtractor,"prototype"];
+        dotFile({scope:scope, extractors: extractors});
+    }
+}
+
 function classesAndHieritance(){
     const scope = new function(){
         class Animal{
@@ -122,6 +131,7 @@ function classesAndHieritance(){
     }
 }
 
+
 function dotFile(config){
     const scope = config.scope;
     const extractors = config.extractors;
@@ -130,14 +140,13 @@ function dotFile(config){
     const filter = config.filter;
 
     with(objGraph){
-        const objects = ObjGraph.scopeToArray(scope);
-        const nominator = new ScopedNominator(scope);
-        const g = new ObjGraph(objects,extractors,nominator,filter,100);
-        g.toDotFile(out);
+        createObjGraph(config).toDotFile(out);
     }
 }
 
-//test();
-doubleLinkedList();
-//classesAndHieritance();
-//bidimensionalArray();
+    //test();
+    //doubleLinkedList();
+    //classesAndHieritance();
+    //bidimensionalArray();
+    itself();
+

@@ -308,6 +308,45 @@ const objGraph = (function(){
             });
         }
 
+        toMxGraph(mxgraph){
+            const g = this.graph;
+            const n = this.nominator;
+            const parent = mxgraph.getDefaultParent();
+
+            const find = function(o){
+                for( let i = 0 ; i < g.length ; i++ ){
+                    if( g[i].obj === o ){
+                        return i;
+                    }
+                }
+                return null;
+            };
+
+            const vertex = g.map(function(list){
+                const label = n.nameOf(list.obj);
+                const w = 20+label.length*7;
+                const h = 20;
+                const v = mxgraph.insertVertex(parent,null,label,0,0,w,h);
+                return v;
+            });
+
+
+            for( let i = 0 ; i < g.length ; i++ ){
+                const list = g[i];
+                const fromVertex = vertex[i];
+                console.log("from:" + list );
+                const from = list.obj;
+                list.edges.forEach( function(edge){
+                    const to = edge.obj;
+                    const toIndex = find(to);
+                    const toVertex = vertex[toIndex];
+                    const label = edge.name;
+                    mxgraph.insertEdge(parent,null,label,fromVertex,toVertex);
+                });
+            }
+            
+        }
+
         toDotFile(out){
             const g = this.graph;
             const n = this.nominator;
@@ -342,8 +381,24 @@ const objGraph = (function(){
             out("}");
         }
     }
-
     ret.ObjGraph = ObjGraph;
+
+    function createObjGraph(config){
+        const scope = config.scope;
+        const extractors = config.extractors;
+        const out = config.out || console.log;
+        const level = config.level || 100;
+        const filter = config.filter;
+
+        with(objGraph){
+            const objects = ObjGraph.scopeToArray(scope);
+            const nominator = new ScopedNominator(scope);
+            const g = new ObjGraph(objects,extractors,nominator,filter,100);
+            return g;
+        }
+    }
+    ret.createObjGraph = createObjGraph;
+
     return ret;
 })();
 

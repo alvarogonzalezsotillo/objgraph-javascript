@@ -1,76 +1,169 @@
 <html>
 
-    <head>
-    </head>
-    
-    <body onload="main(document.getElementById('graphContainer'))">
+  <head>
+  </head>
+  
+  <body onload="main(document.getElementById('graphContainer'))">
 
 
-        <script type="text/javascript">
-	 mxBasePath = './mxgraph-3.9.8/javascript/src';
-	</script>
-        <script type="text/javascript" src="./mxgraph-3.9.8/javascript/mxClient.min.js"></script>
+    <script type="text/javascript">
+      mxBasePath = './mxgraph-3.9.8/javascript/src';
+    </script>
+    <script type="text/javascript" src="./mxgraph-3.9.8/javascript/mxClient.min.js"></script>
+
+    <script type="text/javascript" src="./objGraph.js"></script>
 
 
-        <script>
-	 function main(container)
-	 {
-	     // Checks if the browser is supported
-	     if (!mxClient.isBrowserSupported())
-		 {
-		     // Displays an error message if the browser is not supported.
-			 mxUtils.error('Browser is not supported!', 200, false);
-		 }
-	     else
-		 {
-		     // Disables the built-in context menu
-		     mxEvent.disableContextMenu(container);
-		     
-		     // Creates the graph inside the given container
-		     var graph = new mxGraph(container);
+    <script>
 
-		     // Enables rubberband selection
-		     // new mxRubberband(graph);
-		     
-		     // Gets the default parent for inserting new cells. This
-		     // is normally the first child of the root (ie. layer 0).
-			 var parent = graph.getDefaultParent();
-		     
-		     // Adds cells to the model in a single step
-		     graph.getModel().beginUpdate();
-		     try
-		     {
-			 var v1 = graph.insertVertex(parent, null, 'Hello, 1234 5678 9012 3456', 0, 0, 80, 30 );
-			 var v2 = graph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
-			 var v3 = graph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
-			 var e1 = graph.insertEdge(parent, null, 'edge', v1, v2);
-			 var e2 = graph.insertEdge(parent, null, 'edge', v3, v2);
-		     }
-		     finally
-		     {
-			 // Updates the display
-			 graph.getModel().endUpdate();
-		     }
+     function fillTestGraph(mxgraph){
+         // Gets the default parent for inserting new cells. This
+         // is normally the first child of the root (ie. layer 0).
+         var parent = mxgraph.getDefaultParent();
 
-                     let layout = new mxHierarchicalLayout(graph);
-                     layout.execute(graph.getDefaultParent())
-		 }
+         var v1 = mxgraph.insertVertex(parent, null, 'Hello, 1234 5678 9012 3456', 0, 0, 80, 30 );
+         var v2 = mxgraph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
+         var v3 = mxgraph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
+         var e1 = mxgraph.insertEdge(parent, null, 'edge', v1, v2);
+         var e2 = mxgraph.insertEdge(parent, null, 'edge', v3, v2);
+     }
 
+     function fillItself(mxgraph){
+
+         with(objGraph){
+             const config = {
+                 scope: objGraph,
+                 extractors: [PrototypeExtractor,"prototype"],
+             };
+             createObjGraph(config).toMxGraph(mxgraph);
+         }
+
+     }
+
+     function fillBidimensionalArray(mxgraph){
+
+         with(objGraph){
+             const config = {
+                 scope: new function(){
+                     this.array = [];
+                     for( let x = 0 ; x < 5 ; x++ ){
+                         this.array[x] = [];
+                         for( let y = 0 ; y < 3 ; y++ ){
+                             this.array[x][y] = x+","+y;
+                         }
+                     }
+                     this.array.push("Hola Jaime");
+                 }(),
+                 extractors: [IndexedExtractor]
+             };
+             createObjGraph(config).toMxGraph(mxgraph);
+         }
+     }
+
+
+     function executeCodeEditor(editor){
+         const code = editor.value;
+         const scope = eval(code);
+
+         console.log(scope);
+         with(objGraph){
+             const config = {
+                 scope: objGraph,
+                 extractors: [IndexedExtractor,EnumerablePropertiesExtractor],
+             };
+             createObjGraph(config).toMxGraph(window.mxgraph);
+
+             let layout = new mxHierarchicalLayout(window.mxgraph);
+             layout.execute(window.mxgraph.getDefaultParent())
+
+         }
+
+     }
+     
+     
+     function main(container){
+         // Checks if the browser is supported
+         if (!mxClient.isBrowserSupported()) {
+             // Displays an error message if the browser is not supported.
+             mxUtils.error('Browser is not supported!', 200, false);
+         }
+         else{
+             // Disables the built-in context menu
+             mxEvent.disableContextMenu(container);
+             
+             // Creates the graph inside the given container
+             var graph = new mxGraph(container);
+             window.mxgraph = graph;
+
+             graph.addListener(mxEvent.MOVE_CELLS, function(e){
+             });
+
+             // Enables rubberband selection
+             new mxRubberband(graph);
+
+             // Changes the default vertex style in-place
+             var style = graph.getStylesheet().getDefaultVertexStyle();
+             style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
+             style[mxConstants.STYLE_GRADIENTCOLOR] = 'white';
+             style[mxConstants.STYLE_PERIMETER_SPACING] = 6;
+             style[mxConstants.STYLE_ROUNDED] = true;
+             style[mxConstants.STYLE_SHADOW] = true;
+
+             style = graph.getStylesheet().getDefaultEdgeStyle();
+             style[mxConstants.STYLE_ROUNDED] = true;
 
              
-	 };
+             
+             // Adds cells to the model in a single step
+             graph.getModel().beginUpdate();
+             try{
+                 //fillTestGraph(graph);
+                 fillItself(graph);
+                 fillBidimensionalArray(graph);
+             }
+             finally{
+                 // Updates the display
+                 graph.getModel().endUpdate();
+             }
 
-        </script>
-
-        <style>
-         #graphContainer{
-             width: 100%;
-             height; 100%;
+             mxHierarchicalLayout.prototype.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
+             let layout = new mxHierarchicalLayout(graph);
+             layout.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
+             layout.execute(graph.getDefaultParent())
          }
-        </style>
-        
-        <div id="graphContainer"/>
 
-    </body>
+
+         
+     }
+
+    </script>
+
+    <style>
+     #graphContainer{
+         width: 50%;
+         height: 100%;
+         display: inline-block;
+         overflow: scroll;
+     }
+     #codeEditor{
+         width: 49%;
+         height: 100%;
+         display: inline-block;
+     }
+     body{
+         overflow: hidden;
+     }
+    </style>
+
+    <div id="graphContainer"></div>
+    <textarea id="codeEditor" onkeyup="executeCodeEditor(this)">
+hola
+    </textarea>
+    
+
+  </body>
 
 </html>
+
+var a = [1,2,3];
+a
