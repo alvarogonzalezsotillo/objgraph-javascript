@@ -26,6 +26,7 @@ const objGraph = (function(){
             super( function(o){
                 const props = names.map(n => typeof o[n] != "undefined" ? [n,o[n]] : [] );
                 const filtered = props.filter( a => a.length != 0 );
+                console.log( o + " [" + names + "]:" + filtered );
                 return filtered;
             });
         }
@@ -80,7 +81,11 @@ const objGraph = (function(){
 
     const EnumerablePropertiesExtractor = new Extractor(
         function(o){
-            const props = Object.keys(o);
+            let props = Object.keys(o);
+            if( typeof(o) == "string" ){
+                console.log("----------------------------------------");
+                props = ["length"]; 
+            }
             const obj = o;
             const ret = [];
             for( let i = 0 ; i < props.length ; i++ ){
@@ -202,6 +207,8 @@ const objGraph = (function(){
     };
     ret.ScopedNominator = ScopedNominator;
 
+
+    
     class ObjGraph{
 
         static scopeToArray(scope){
@@ -214,16 +221,23 @@ const objGraph = (function(){
 
         constructor(objects,extractors,nominator,filter,maxLevel){
             this._objects = objects;
-            extractors = extractors;
-            for( let i = 0 ; i < extractors.length ; i++ ){
-                if( typeof extractors[i] == "string" ){
-                    extractors[i] = new PropertiesExtractor([extractors[i]]);
+            console.log( "ObjGraph: objects:" + objects );
+            extractors = extractors.map( function(e){
+                if( typeof e == "string" ){
+                    return new PropertiesExtractor([e]);
                 }
-            }
+                else{
+                    return e;
+                }
+                
+            });
             this._extractors = extractors;
             this._nominator = nominator || DefaultNominator;
             this._maxLevel = maxLevel || 4;
-            this._filter = filter || function(o){ return typeof o != "string"; };
+
+            const defaultFilter = o => true; 
+            this._filter = filter  || defaultFilter;
+
         }
 
         get objects(){
@@ -253,6 +267,7 @@ const objGraph = (function(){
 
         
         addToGraph(graph,o,level){
+            console.log( "addToGraph:" + o + " -- " + level );
             if( level > this._maxLevel ){
                 return;
             }
@@ -277,6 +292,8 @@ const objGraph = (function(){
             const list = findOrInsert(o);
 
             const includeSubproperties = !this.filter || this.filter(o);
+            console.log( "addToGraph: includeSubproperties:" + includeSubproperties );
+
 
             if( list && includeSubproperties ){
                 const newObjects = [];
@@ -390,6 +407,8 @@ const objGraph = (function(){
         const level = config.level || 100;
         const filter = config.filter;
 
+        console.log("createObjGraph: extractors:" + extractors );
+        
         with(objGraph){
             const objects = ObjGraph.scopeToArray(scope);
             const nominator = new ScopedNominator(scope);

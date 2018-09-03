@@ -63,9 +63,7 @@
 
 
          function checkReturn(exports){
-             console.log(exports);
              if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
-                 alert("No hay module.exports.scope");
                  const editor = document.getElementById("codeEditor");
 
                  const sampleConfig = {
@@ -94,12 +92,20 @@
                  exports.extractors = [];
              }
 
-             console.log(exports);
+
+
              with(objGraph){
                  const config = {
                      scope: exports.scope,
-                     extractors: [EnumerablePropertiesExtractor].concat(exports.extractors),
+                     extractors: exports.extractors.concat([EnumerablePropertiesExtractor]),
+                     filter : exports.filter
                  };
+                 console.log("exports:");
+                 console.log(exports);
+                 console.log("config:");
+                 console.log(config);
+                 console.log("extractors:")
+                 console.log(config.extractors)
                  mxgraph.getModel().clear();
                  createObjGraph(config).toMxGraph(window.mxgraph);
 
