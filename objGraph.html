@@ -1,171 +1,205 @@
 <html>
 
-  <head>
-  </head>
-  
-  <body onload="main(document.getElementById('graphContainer'))">
-
-
-    <script type="text/javascript">
-      mxBasePath = './mxgraph-3.9.8/javascript/src';
-    </script>
-    <script type="text/javascript" src="./mxgraph-3.9.8/javascript/mxClient.min.js"></script>
-
-    <script type="text/javascript" src="./objGraph.js"></script>
-
-
-    <script>
-
-     function fillTestGraph(mxgraph){
-         // Gets the default parent for inserting new cells. This
-         // is normally the first child of the root (ie. layer 0).
-         var parent = mxgraph.getDefaultParent();
-
-         var v1 = mxgraph.insertVertex(parent, null, 'Hello, 1234 5678 9012 3456', 0, 0, 80, 30 );
-         var v2 = mxgraph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
-         var v3 = mxgraph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
-         var e1 = mxgraph.insertEdge(parent, null, 'edge', v1, v2);
-         var e2 = mxgraph.insertEdge(parent, null, 'edge', v3, v2);
-     }
-
-     function fillItself(mxgraph){
-
-         with(objGraph){
-             const config = {
-                 scope: objGraph,
-                 extractors: [PrototypeExtractor,"prototype"],
-             };
-             createObjGraph(config).toMxGraph(mxgraph);
-         }
-
-     }
-
-     function fillBidimensionalArray(mxgraph){
-
-         with(objGraph){
-             const config = {
-                 scope: function(){
-                     const ret = {};
-                     ret.array = [];
-                     for( let x = 0 ; x < 5 ; x++ ){
-                         ret.array[x] = [];
-                         for( let y = 0 ; y < 3 ; y++ ){
-                             ret.array[x][y] = x+","+y;
-                         }
-                     }
-                     ret.array.push("Hola Jaime");
-                 }(),
-                 extractors: [IndexedExxtractor]
-             };
-             createObjGraph(config).toMxGraph(mxgraph);
-         }
-     }
-
-
-     function executeCodeEditor(editor){
-         const code = editor.value;
-         const scope = eval(code);
-
-         console.log(scope);
-         with(objGraph){
-             const config = {
-                 scope: scope,
-                 extractors: [EnumerablePropertiesExtractor],
-             };
-             mxgraph.getModel().clear();
-             createObjGraph(config).toMxGraph(window.mxgraph);
-
-             let layout = new mxHierarchicalLayout(window.mxgraph);
-             layout.execute(window.mxgraph.getDefaultParent())
-
-         }
-
-     }
-     
-     
-     function main(container){
-         // Checks if the browser is supported
-         if (!mxClient.isBrowserSupported()) {
-             // Displays an error message if the browser is not supported.
-             mxUtils.error('Browser is not supported!', 200, false);
-         }
-         else{
-             // Disables the built-in context menu
-             mxEvent.disableContextMenu(container);
-             
-             // Creates the graph inside the given container
-             var graph = new mxGraph(container);
-             window.mxgraph = graph;
-
-             graph.addListener(mxEvent.MOVE_CELLS, function(e){
-             });
-
-             // Enables rubberband selection
-             new mxRubberband(graph);
-
-             // Changes the default vertex style in-place
-             var style = graph.getStylesheet().getDefaultVertexStyle();
-             style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
-             style[mxConstants.STYLE_GRADIENTCOLOR] = 'white';
-             style[mxConstants.STYLE_PERIMETER_SPACING] = 6;
-             style[mxConstants.STYLE_ROUNDED] = true;
-             style[mxConstants.STYLE_SHADOW] = true;
-
-             style = graph.getStylesheet().getDefaultEdgeStyle();
-             style[mxConstants.STYLE_ROUNDED] = true;
-
-             
-             
-             // Adds cells to the model in a single step
-             graph.getModel().beginUpdate();
-             try{
-                 //fillTestGraph(graph);
-                 //fillItself(graph);
-                 //fillBidimensionalArray(graph);
-             }
-             finally{
-                 // Updates the display
-                 graph.getModel().endUpdate();
-             }
-
-             mxHierarchicalLayout.prototype.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
-             let layout = new mxHierarchicalLayout(graph);
-             layout.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
-             layout.execute(graph.getDefaultParent())
-         }
-
-
-         
-     }
-
-    </script>
-
-    <style>
-     #graphContainer{
-         width: 50%;
-         height: 100%;
-         display: inline-block;
-         overflow: scroll;
-     }
-     #codeEditor{
-         width: 49%;
-         height: 100%;
-         display: inline-block;
-     }
-     body{
-         overflow: hidden;
-     }
-    </style>
-
-    <div id="graphContainer"></div>
-    <textarea id="codeEditor" onkeyup="executeCodeEditor(this)">
-hola
-    </textarea>
+    <head>
+    </head>
     
+    <body onload="main(document.getElementById('graphContainer'))">
 
-  </body>
+
+        <script type="text/javascript">
+         mxBasePath = './mxgraph-3.9.8/javascript/src';
+        </script>
+        <script type="text/javascript" src="./mxgraph-3.9.8/javascript/mxClient.min.js"></script>
+
+        <script type="text/javascript" src="./objGraph.js"></script>
+
+
+        <script>
+
+         function fillTestGraph(mxgraph){
+             // Gets the default parent for inserting new cells. This
+             // is normally the first child of the root (ie. layer 0).
+             var parent = mxgraph.getDefaultParent();
+
+             var v1 = mxgraph.insertVertex(parent, null, 'Hello, 1234 5678 9012 3456', 0, 0, 80, 30 );
+             var v2 = mxgraph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
+             var v3 = mxgraph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
+             var e1 = mxgraph.insertEdge(parent, null, 'edge', v1, v2);
+             var e2 = mxgraph.insertEdge(parent, null, 'edge', v3, v2);
+         }
+
+         function fillItself(mxgraph){
+
+             with(objGraph){
+                 const config = {
+                     scope: objGraph,
+                     extractors: [PrototypeExtractor,"prototype"],
+                 };
+                 createObjGraph(config).toMxGraph(mxgraph);
+             }
+
+         }
+
+         function fillBidimensionalArray(mxgraph){
+
+             with(objGraph){
+                 const config = {
+                     scope: function(){
+                         const ret = {};
+                         ret.array = [];
+                         for( let x = 0 ; x < 5 ; x++ ){
+                             ret.array[x] = [];
+                             for( let y = 0 ; y < 3 ; y++ ){
+                                 ret.array[x][y] = x+","+y;
+                             }
+                         }
+                         ret.array.push("Hola Jaime");
+                     }(),
+                     extractors: [IndexedExxtractor]
+                 };
+                 createObjGraph(config).toMxGraph(mxgraph);
+             }
+         }
+
+
+         function checkReturn(exports){
+             console.log(exports);
+             if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
+                 alert("No hay module.exports.scope");
+                 const editor = document.getElementById("codeEditor");
+
+                 const sampleConfig = {
+                     scope : {
+                         theArray: [1,2,[3,4],"Last"],
+                         theString: "Hello, objGraph.js!"
+                     },
+                     extractors : ["length"]
+                 };
+                 
+                 editor.value += "\n// MISSING module.exports.scope . EXAMPLE:\nmodule.exports = " + JSON.stringify(sampleConfig,null,2) + ";";
+                 
+             }
+         }
+
+         function executeCodeEditor(){
+             const editor = document.getElementById("codeEditor");
+             const code = editor.value;
+             const fun = new Function(
+                 "const module = {exports: {scope: null} };\n" +
+                 code +
+                 "\ncheckReturn(module.exports);" +
+                 "\nreturn module.exports;");
+             const exports = fun();
+             if( !exports.extractors ){
+                 exports.extractors = [];
+             }
+
+             console.log(exports);
+             with(objGraph){
+                 const config = {
+                     scope: exports.scope,
+                     extractors: [EnumerablePropertiesExtractor].concat(exports.extractors),
+                 };
+                 mxgraph.getModel().clear();
+                 createObjGraph(config).toMxGraph(window.mxgraph);
+
+                 let layout = new mxHierarchicalLayout(window.mxgraph);
+                 layout.execute(window.mxgraph.getDefaultParent())
+
+             }
+
+         }
+         
+         
+         function main(container){
+             // Checks if the browser is supported
+             if (!mxClient.isBrowserSupported()) {
+                 // Displays an error message if the browser is not supported.
+                 mxUtils.error('Browser is not supported!', 200, false);
+             }
+             else{
+                 // Disables the built-in context menu
+                 mxEvent.disableContextMenu(container);
+                 
+                 // Creates the graph inside the given container
+                 var graph = new mxGraph(container);
+                 window.mxgraph = graph;
+
+                 graph.addListener(mxEvent.MOVE_CELLS, function(e){
+                 });
+
+                 // Enables rubberband selection
+                 new mxRubberband(graph);
+
+                 // Changes the default vertex style in-place
+                 var style = graph.getStylesheet().getDefaultVertexStyle();
+                 style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
+                 //style[mxConstants.STYLE_GRADIENTCOLOR] = 'white';
+                 style[mxConstants.STYLE_PERIMETER_SPACING] = 6;
+                 style[mxConstants.STYLE_ROUNDED] = true;
+                 //style[mxConstants.STYLE_SHADOW] = true;
+
+                 style = graph.getStylesheet().getDefaultEdgeStyle();
+                 style[mxConstants.STYLE_ROUNDED] = true;
+
+                 
+                 
+                 // Adds cells to the model in a single step
+                 graph.getModel().beginUpdate();
+                 try{
+                     //fillTestGraph(graph);
+                     //fillItself(graph);
+                     //fillBidimensionalArray(graph);
+                 }
+                 finally{
+                     // Updates the display
+                     graph.getModel().endUpdate();
+                 }
+
+                 mxHierarchicalLayout.prototype.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
+                 let layout = new mxHierarchicalLayout(graph);
+                 layout.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
+                 layout.execute(graph.getDefaultParent())
+             }
+
+
+             
+         }
+
+        </script>
+
+        <style>
+         #graphContainer{
+             width: 50%;
+             height: 100%;
+             display: inline-block;
+             overflow: scroll;
+         }
+         #editorFrame{
+             width: 49%;
+             height: 100%;
+             display: inline-block;
+         }
+         #codeEditor{
+             height: 80%;
+             width: 100%;
+             display: block;
+         }
+         body{
+             overflow: hidden;
+         }
+        </style>
+
+        <div id="graphContainer"></div>
+        <div id="editorFrame">
+            Se creará un diagrama de los objetos accesibles en <code>module.exports.scope</code>
+            <textarea id="codeEditor">
+            </textarea>
+            <input type="button" value="eval" onclick="executeCodeEditor()">
+        </div>
+        
+
+    </body>
 
 </html>
 
-var a = [1,2,3];
-a
