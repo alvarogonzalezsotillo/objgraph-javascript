@@ -26,7 +26,7 @@ const objGraph = (function(){
             super( function(o){
                 const props = names.map(n => typeof o[n] != "undefined" ? [n,o[n]] : [] );
                 const filtered = props.filter( a => a.length != 0 );
-                console.log( o + " [" + names + "]:" + filtered );
+                log( o + " [" + names + "]:" + filtered );
                 return filtered;
             });
         }
@@ -79,16 +79,28 @@ const objGraph = (function(){
     );
     ret.EnumerableOwnPropertiesExtractor = EnumerableOwnPropertiesExtractor;
 
+    const ToStringExtractor = new Extractor(
+        function(o){
+            if( o.toString && !o.__skipToStringExtractor ){
+                return [["toString", { __skipToStringExtractor: true, toString: function(){ return o.toString() } }]];
+            }
+            return [];
+        }
+    );
+    ret.ToStringExtractor = ToStringExtractor;
+    
     const EnumerablePropertiesExtractor = new Extractor(
         function(o){
             let props = Object.keys(o);
             if( typeof(o) == "string" ){
-                console.log("----------------------------------------");
                 props = ["length"]; 
             }
             const obj = o;
             const ret = [];
             for( let i = 0 ; i < props.length ; i++ ){
+                if( p == "__skipToStringExtractor" ){
+                    continue;
+                }
                 const p = props[i];
                 try{
                     ret.push([p,o[p]]);
@@ -224,7 +236,7 @@ const objGraph = (function(){
 
         constructor(objects,extractors,nominator,filter,maxLevel){
             this._objects = objects;
-            console.log( "ObjGraph: objects:" + objects );
+            log( "ObjGraph: objects:" + objects );
             extractors = extractors.map( function(e){
                 if( typeof e == "string" ){
                     return new PropertiesExtractor([e]);
@@ -270,7 +282,7 @@ const objGraph = (function(){
 
         
         addToGraph(graph,o,level){
-            console.log( "addToGraph:" + o + " -- " + level );
+            log( "addToGraph:" + o + " -- " + level );
             if( level > this._maxLevel ){
                 return;
             }
@@ -295,7 +307,7 @@ const objGraph = (function(){
             const list = findOrInsert(o);
 
             const includeSubproperties = !this.filter || this.filter(o);
-            console.log( "addToGraph: includeSubproperties:" + includeSubproperties );
+            log( "addToGraph: includeSubproperties:" + includeSubproperties );
 
 
             if( list && includeSubproperties ){
@@ -354,7 +366,7 @@ const objGraph = (function(){
             for( let i = 0 ; i < g.length ; i++ ){
                 const list = g[i];
                 const fromVertex = vertex[i];
-                console.log("from:" + list );
+                log("from:" + list );
                 const from = list.obj;
                 list.edges.forEach( function(edge){
                     const to = edge.obj;
@@ -406,11 +418,11 @@ const objGraph = (function(){
     function createObjGraph(config){
         const scope = config.scope;
         const extractors = config.extractors;
-        const out = config.out || console.log;
+        const out = config.out || log;
         const level = config.level || 100;
         const filter = config.filter;
 
-        console.log("createObjGraph: extractors:" + extractors );
+        log("createObjGraph: extractors:" + extractors );
         
         with(objGraph){
             const objects = ObjGraph.scopeToArray(scope);
