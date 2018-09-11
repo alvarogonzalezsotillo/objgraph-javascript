@@ -16,51 +16,7 @@
 
         <script>
 
-         function fillTestGraph(mxgraph){
-             // Gets the default parent for inserting new cells. This
-             // is normally the first child of the root (ie. layer 0).
-             var parent = mxgraph.getDefaultParent();
-
-             var v1 = mxgraph.insertVertex(parent, null, 'Hello, 1234 5678 9012 3456', 0, 0, 80, 30 );
-             var v2 = mxgraph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
-             var v3 = mxgraph.insertVertex(parent, null, 'World!', 0, 0, 80, 30);
-             var e1 = mxgraph.insertEdge(parent, null, 'edge', v1, v2);
-             var e2 = mxgraph.insertEdge(parent, null, 'edge', v3, v2);
-         }
-
-         function fillItself(mxgraph){
-
-             with(objGraph){
-                 const config = {
-                     scope: objGraph,
-                     extractors: [PrototypeExtractor,"prototype"],
-                 };
-                 createObjGraph(config).toMxGraph(mxgraph);
-             }
-
-         }
-
-         function fillBidimensionalArray(mxgraph){
-
-             with(objGraph){
-                 const config = {
-                     scope: function(){
-                         const ret = {};
-                         ret.array = [];
-                         for( let x = 0 ; x < 5 ; x++ ){
-                             ret.array[x] = [];
-                             for( let y = 0 ; y < 3 ; y++ ){
-                                 ret.array[x][y] = x+","+y;
-                             }
-                         }
-                         ret.array.push("Hola Jaime");
-                     }(),
-                     extractors: [IndexedExxtractor]
-                 };
-                 createObjGraph(config).toMxGraph(mxgraph);
-             }
-         }
-
+         
 
          function checkReturn(exports){
              if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
@@ -81,6 +37,10 @@
 
          function executeCodeEditor(){
              const editor = document.getElementById("codeEditor");
+             const epe = document.getElementById("enumerablePropertiesExtractor").checked;
+             const che = document.getElementById("classHierarchyExtractor").checked;
+             const pe = document.getElementById("propertiesExtractor").value;
+             
              const code = editor.value;
              const fun = new Function(
                  "const module = {exports: {scope: null} };\n" +
@@ -93,11 +53,25 @@
              }
 
 
+             //luis bravo mendez Envera
 
              with(objGraph){
+
+                 let extractors = [];
+                 if( epe ){
+                     extractors.push( EnumerablePropertiesExtractor );
+                 }
+                 if( che ){
+                     extractors.push( PrototypeExtractor );
+                     extractors.push( "prototype" );
+                 }
+                 if( pe ){
+                     
+                 }
+                 
                  const config = {
                      scope: exports.scope,
-                     extractors: exports.extractors.concat([EnumerablePropertiesExtractor]),
+                     extractors: exports.extractors.concat(extractors),
                      filter : exports.filter
                  };
                  console.log("exports:");
@@ -191,6 +165,9 @@
              width: 100%;
              display: block;
          }
+         row{
+             display: block;
+         }
          body{
              overflow: hidden;
          }
@@ -201,7 +178,21 @@
             Se creará un diagrama de los objetos accesibles en <code>module.exports.scope</code>
             <textarea id="codeEditor">
             </textarea>
-            <input type="button" value="eval" onclick="executeCodeEditor()">
+            <row>
+                <label for="enumerablePropertiesExtractor">Todas las propiedades enumerables</label>
+                <input id="enumerablePropertiesExtractor" type="checkbox"/>
+            </row>
+            <row>
+                <label for="classHierarchyExtractor">prototype y [[prototype]]</label>
+                <input id="classHierarchyExtractor" type="checkbox"/>
+            </row>
+            <row>
+                <label for="propertiesExtractor">Otras propiedades (separadas por comas)</label>
+                <input id="propertiesExtractor" type="text"></input>
+            </row>
+            <row>
+                <input type="button" value="eval" onclick="executeCodeEditor()"/>
+            </row>
         </div>
         
 

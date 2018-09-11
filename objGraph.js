@@ -134,6 +134,9 @@ const objGraph = (function(){
             if( typeof o == "undefined" ){
                 return;
             }
+            if( this._edges.find( e => e.name == name) ){
+                return;
+            }
             this._edges.push( new EdgeTo(o,name) );
         }
     }
