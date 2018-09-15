@@ -98,10 +98,10 @@ const objGraph = (function(){
             const obj = o;
             const ret = [];
             for( let i = 0 ; i < props.length ; i++ ){
+                const p = props[i];
                 if( p == "__skipToStringExtractor" ){
                     continue;
                 }
-                const p = props[i];
                 try{
                     ret.push([p,o[p]]);
                 }
@@ -188,6 +188,10 @@ const objGraph = (function(){
         }
         catch(e){
             toStringError = e.toString();
+        }
+
+        if (typeof o === 'string' || o instanceof String || o.__skipToStringExtractor ){
+            return toString;
         }
         
         if( typeof o == "object" ){
@@ -419,15 +423,22 @@ const objGraph = (function(){
         const scope = config.scope;
         const extractors = config.extractors;
         const out = config.out || log;
-        const level = config.level || 100;
+        const level = config.level || 5;
         const filter = config.filter;
 
         log("createObjGraph: extractors:" + extractors );
         
         with(objGraph){
-            const objects = ObjGraph.scopeToArray(scope);
-            const nominator = new ScopedNominator(scope);
-            const g = new ObjGraph(objects,extractors,nominator,filter,100);
+            let objects;
+            let nominator;
+            if( Array.isArray(scope) ){
+                objects = scope;
+            }
+            else{
+                objects = ObjGraph.scopeToArray(scope);
+                nominator = new ScopedNominator(scope);
+            }
+            const g = new ObjGraph(objects,extractors,nominator,filter,level);
             return g;
         }
     }

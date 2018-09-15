@@ -84,7 +84,10 @@
                      filter : exports.filter
                  };
                  mxgraph.getModel().clear();
-                 createObjGraph(config).toMxGraph(window.mxgraph);
+                 console.log("Creating graph.");
+                 const objgraph = createObjGraph(config);
+                 console.log("Graph created.");
+                 objgraph.toMxGraph(window.mxgraph);
 
                  let layout = new mxHierarchicalLayout(window.mxgraph);
                  layout.execute(window.mxgraph.getDefaultParent())
