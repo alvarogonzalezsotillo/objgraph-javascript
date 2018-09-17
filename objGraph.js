@@ -345,6 +345,58 @@ const objGraph = (function(){
             });
         }
 
+        toCytoscape(cytoscapeGraph){
+            const g = this.graph;
+            const n = this.nominator;
+
+            const elements = [];
+            const find = function(o){
+                for( let i = 0 ; i < g.length ; i++ ){
+                    if( g[i].obj === o ){
+                        return i;
+                    }
+                }
+                return null;
+            };
+
+            for( let i = 0 ; i < g.length ; i++ ){
+                const list = g[i];
+                const label = n.nameOf(list.obj);
+                const vertex = {
+                    data : {
+                        id : "v"+i,
+                        label: label
+                    },
+                };
+                elements.push(vertex);
+            }
+
+
+            for( let i = 0 ; i < g.length ; i++ ){
+                const list = g[i];
+                const fromIndex = i;
+                const edges = list.edges;
+                for( let j = 0 ; j < edges.length ; j++ ){
+                    const edge = edges[j];
+                    const to = edge.obj;
+                    const toIndex = find(to);
+                    const label = edge.name;
+                    const e = {
+                        data : {
+                            label: label,
+                            source: "v"+fromIndex,
+                            target: "v"+toIndex
+                        },
+                    }
+                    elements.push(e);
+                }
+            }
+
+            cytoscapeGraph.remove( cytoscapeGraph.filter(e=>true) );
+            cytoscapeGraph.add(elements);
+            
+        }
+
         toMxGraph(mxgraph){
             const g = this.graph;
             const n = this.nominator;

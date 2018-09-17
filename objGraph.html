@@ -1,9 +1,10 @@
 <html>
 
     <head>
+        <meta name="viewport" content="width=device-width">
     </head>
     
-    <body onload="main(document.getElementById('graphContainer'))">
+    <body onload="init()">
 
 
         <script type="text/javascript">
@@ -11,12 +12,19 @@
         </script>
         <script type="text/javascript" src="./mxgraph/mxClient.min.js"></script>
 
+        <script src="./cytoscape/cytoscape.js"></script>
+
         <script type="text/javascript" src="./objGraph.js"></script>
 
 
         <script>
 
-         
+         function init(){
+             initMxgraph(document.getElementById('mxgraphContainer'));
+             initCytoscape(document.getElementById('cytoscapeContainer'));
+         }
+
+
 
          function checkReturn(exports){
              if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
@@ -83,21 +91,84 @@
                      extractors: exports.extractors.concat(extractors),
                      filter : exports.filter
                  };
-                 mxgraph.getModel().clear();
+
                  console.log("Creating graph.");
                  const objgraph = createObjGraph(config);
                  console.log("Graph created.");
-                 objgraph.toMxGraph(window.mxgraph);
 
-                 let layout = new mxHierarchicalLayout(window.mxgraph);
-                 layout.execute(window.mxgraph.getDefaultParent())
+                 function updateMxgraph(){
+                     mxgraph.getModel().clear();
+                     objgraph.toMxGraph(window.mxgraph);
+                     let layout = new mxHierarchicalLayout(window.mxgraph);
+                     layout.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
+                     layout.execute(window.mxgraph.getDefaultParent())
+                 }
+                 updateMxgraph();
+
+                 function updateCytoscape(){
+                     objgraph.toCytoscape(window.cytoscape);
+                     let layout = window.cytoscape.layout({
+                         name: "breadthfirst",
+                         directed: true,
+                         avoidOverlap: true,
+                         nodeDimensionsIncludeLabels: true,
+                         spacingFactor: 0.5,
+                     });
+                     console.log("cytoscape layout:");
+                     console.log(layout);
+                     console.log(layout.run);
+                     //layout.run();
+                 }
+                 updateCytoscape();
 
              }
 
          }
-         
-         
-         function main(container){
+
+
+         function initCytoscape(container){
+             var cy = window.cytoscape = cytoscape({
+                 container: container,
+                 boxSelectionEnabled: false,
+                 autounselectify: true,
+
+                 style: [
+                     {
+                         selector: 'node',
+                         style: {
+                             'content': 'data(label)',
+                             'text-opacity': 0.5,
+                             'text-valign': 'center',
+                             'text-halign': 'right',
+                             'background-color': '#11479e',
+                             width : 'label',
+                             height : 'label',
+                             shape : 'rectangle',
+                             'padding' : '50',
+                             'border-width' : '1px',
+                             'padding-relative-to' : 'min',
+                             'text-valign' : 'center',
+                             'text-halign' : 'center',
+                         }
+                     },
+
+                     {
+                         selector: 'edge',
+                         style: {
+                             content : 'data(label)',
+                             'curve-style': 'bezier',
+                             'width': 4,
+                             'target-arrow-shape': 'triangle',
+                             'line-color': '#9dbaea',
+                             'target-arrow-color': '#9dbaea',
+                             'text-rotation' : 'autorotate',
+                         }
+                     }
+                 ],
+             });
+         }
+
+         function initMxgraph(container){
              // Checks if the browser is supported
              if (!mxClient.isBrowserSupported()) {
                  // Displays an error message if the browser is not supported.
@@ -127,25 +198,6 @@
 
                  style = graph.getStylesheet().getDefaultEdgeStyle();
                  //style[mxConstants.STYLE_ROUNDED] = true;
-
-                 
-                 
-                 // Adds cells to the model in a single step
-                 graph.getModel().beginUpdate();
-                 try{
-                     //fillTestGraph(graph);
-                     //fillItself(graph);
-                     //fillBidimensionalArray(graph);
-                 }
-                 finally{
-                     // Updates the display
-                     graph.getModel().endUpdate();
-                 }
-
-                 mxHierarchicalLayout.prototype.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
-                 let layout = new mxHierarchicalLayout(graph);
-                 layout.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
-                 layout.execute(graph.getDefaultParent())
              }
 
 
@@ -155,9 +207,15 @@
         </script>
 
         <style>
-         #graphContainer{
-             width: 50%;
-             height: 100%;
+         #mxgraphContainer{
+             width: 100%;
+             height: 48%;
+             display: inline-block;
+             overflow: scroll;
+         }
+         #cytoscapeContainer{
+             width: 100%;
+             height: 48%;
              display: inline-block;
              overflow: scroll;
          }
@@ -177,9 +235,16 @@
          body{
              overflow: hidden;
          }
+         #left-column{
+             float:left;
+             width: 50%;
+         }
         </style>
 
-        <div id="graphContainer"></div>
+        <div id="left-column">
+            <div id="mxgraphContainer"></div>
+            <div id="cytoscapeContainer"></div>
+        </div>
         <div id="editorFrame">
             Se creará un diagrama de los objetos accesibles en <code>module.exports.scope</code>
             <textarea id="codeEditor">
