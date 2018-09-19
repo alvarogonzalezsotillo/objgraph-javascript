@@ -1,6 +1,7 @@
 <html>
 
     <head>
+        <meta charset="UTF-8"> 
         <meta name="viewport" content="width=device-width">
     </head>
     
@@ -14,6 +15,9 @@
 
         <script src="./cytoscape/cytoscape.js"></script>
 
+        <script src="https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js"></script>
+        <script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js"></script>
+
         <script type="text/javascript" src="./objGraph.js"></script>
 
 
@@ -25,20 +29,15 @@
          }
 
 
+         
 
          function checkReturn(exports){
              if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
                  const editor = document.getElementById("codeEditor");
 
-                 const sampleConfig = {
-                     scope : {
-                         theArray: [1,2,[3,4],"Last"],
-                         theString: "Hello, objGraph.js!"
-                     },
-                     extractors : ["length"]
-                 };
                  
-                 editor.value += "\n// MISSING module.exports.scope . EXAMPLE:\nmodule.exports = " + JSON.stringify(sampleConfig,null,2) + ";";
+                 editor.value += "\n// MISSING module.exports.scope . EXAMPLE:";
+                 editor.value += objGraph.examples()[2];
                  
              }
          }
@@ -108,16 +107,15 @@
                  function updateCytoscape(){
                      objgraph.toCytoscape(window.cytoscape);
                      let layout = window.cytoscape.layout({
-                         name: "breadthfirst",
+                         name: "dagre",//"breadthfirst",
                          directed: true,
                          avoidOverlap: true,
                          nodeDimensionsIncludeLabels: true,
                          spacingFactor: 0.5,
+                         maximalAdjustments: 100
                      });
                      console.log("cytoscape layout:");
                      console.log(layout);
-                     console.log(layout.run);
-                     //layout.run();
                  }
                  updateCytoscape();
 
@@ -207,24 +205,24 @@
         </script>
 
         <style>
-         #mxgraphContainer{
+         .mxgraphContainer{
              width: 100%;
              height: 48%;
              display: inline-block;
              overflow: scroll;
          }
-         #cytoscapeContainer{
+         .cytoscapeContainer{
              width: 100%;
              height: 48%;
              display: inline-block;
              overflow: scroll;
          }
-         #editorFrame{
+         .editorFrame{
              width: 49%;
              height: 100%;
              display: inline-block;
          }
-         #codeEditor{
+         .codeEditor{
              height: 70%;
              width: 100%;
              display: block;
@@ -235,19 +233,19 @@
          body{
              overflow: hidden;
          }
-         #left-column{
+         .left-column{
              float:left;
              width: 50%;
          }
         </style>
 
-        <div id="left-column">
-            <div id="mxgraphContainer"></div>
-            <div id="cytoscapeContainer"></div>
+        <div class="left-column">
+            <div id="mxgraphContainer" class="mxgraphContainer"></div>
+            <div id="cytoscapeContainer" class="cytoscapeContainer"></div>
         </div>
-        <div id="editorFrame">
+        <div id="editorFrame" class="editorFrame"">
             Se creará un diagrama de los objetos accesibles en <code>module.exports.scope</code>
-            <textarea id="codeEditor">
+            <textarea id="codeEditor" class="codeEditor">
             </textarea>
             <row>
                 <label for="enumerablePropertiesExtractor">Todas las propiedades enumerables</label>
