@@ -7,7 +7,7 @@
     
     <body onload="init()">
 
-
+        
         <script type="text/javascript">
          mxBasePath = './mxgraph/src';
         </script>
@@ -19,13 +19,16 @@
         <script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js"></script>
 
         <script type="text/javascript" src="./objGraph.js"></script>
+        <script type="text/javascript" src="./objGraph.editor.js"></script>
 
 
         <script>
 
          function init(){
-             initMxgraph(document.getElementById('mxgraphContainer'));
-             initCytoscape(document.getElementById('cytoscapeContainer'));
+             let c = document.getElementById("elcontainer");
+             let ge = new objGraphEditor(c);
+             //initMxgraph(document.getElementById('mxgraphContainer'));
+             //initCytoscape(document.getElementById('cytoscapeContainer'));
          }
 
 
@@ -207,70 +210,7 @@
 
         </script>
 
-        <style>
-         .mxgraphContainer{
-             width: 100%;
-             height: 48%;
-             display: inline-block;
-             overflow: scroll;
-         }
-         .cytoscapeContainer{
-             width: 100%;
-             height: 48%;
-             display: inline-block;
-             overflow: scroll;
-         }
-         .editorFrame{
-             width: 49%;
-             height: 100%;
-             display: inline-block;
-         }
-         .codeEditor{
-             height: 70%;
-             width: 100%;
-             display: block;
-         }
-         row{
-             display: block;
-         }
-         body{
-             overflow: hidden;
-         }
-         .left-column{
-             float:left;
-             width: 50%;
-         }
-        </style>
-
-        <div class="left-column">
-            <div id="mxgraphContainer" class="mxgraphContainer"></div>
-            <div id="cytoscapeContainer" class="cytoscapeContainer"></div>
-        </div>
-        <div id="editorFrame" class="editorFrame"">
-            Se creará un diagrama de los objetos accesibles en <code>module.exports.scope</code>
-            <textarea id="codeEditor" class="codeEditor">
-            </textarea>
-            <row>
-                <label for="enumerablePropertiesExtractor">Todas las propiedades enumerables</label>
-                <input id="enumerablePropertiesExtractor" type="checkbox"/>
-            </row>
-            <row>
-                <label for="classHierarchyExtractor">prototype y [[prototype]]</label>
-                <input id="classHierarchyExtractor" type="checkbox"/>
-            </row>
-            <row>
-                <label for="toStringExtractor">toString()</label>
-                <input id="toStringExtractor" type="checkbox"/>
-            </row>
-            <row>
-                <label for="propertiesExtractor">Otras propiedades (separadas por comas)</label>
-                <input id="propertiesExtractor" type="text"></input>
-            </row>
-            <row>
-                <input type="button" value="eval" onclick="executeCodeEditor()"/>
-            </row>
-        </div>
-        
+        <div id="elcontainer"></div>        
 
     </body>
 
