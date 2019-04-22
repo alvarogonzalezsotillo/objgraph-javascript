@@ -14,7 +14,7 @@ class objGraphEditor {
 
         this.controls = d.createElement("div");
         this.evalButton = d.createElement("button", { value: "Evaluar" });
-        this.evalButton.onclick = (e) => console.log("Me han pulsado");
+        this.evalButton.onclick = (e) => this.executeCodeEditor();
         this.controls.appendChild(this.evalButton);
 
 
@@ -23,16 +23,33 @@ class objGraphEditor {
         this.container.appendChild(this.controls);
     }
 
+
+    checkReturn(exports){
+        if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
+            
+            this.codeEditor.value += "\n// MISSING module.exports.scope . EXAMPLE:";
+            this.codeEditor.value += objGraph.examples()[2];
+            return false;
+        }
+        return true;
+    }
+
+
     executeCodeEditor() {
-        const editor = document.getElementById("codeEditor");
+        const editor = this.codeEditor;
 
         const code = editor.value;
         const fun = new Function(
             "const module = {exports: {scope: null} };\n" +
             code +
-            "\ncheckReturn(module.exports);" +
             "\nreturn module.exports;");
         const exports = fun();
+
+        if( !this.checkReturn(exports) ){
+            return;
+        }
+
+
         if (!exports.extractors) {
             exports.extractors = [];
         }
@@ -40,48 +57,20 @@ class objGraphEditor {
 
 
 
-        let extractors = [];
-        if (epe) {
-            extractors.push(EnumerablePropertiesExtractor);
-        }
-        if (tse) {
-            extractors.push(ToStringExtractor);
-        }
-        if (che) {
-            extractors.push(PrototypeExtractor);
-            extractors.push("prototype");
-        }
-
-        if (pe) {
-            const properties = pe.split(/[\s,]+/);
-            console.log(properties);
-            properties.forEach(p => extractors.push(p));
-        }
-
-        console.log("extractors:" + extractors);
 
         const config = {
             scope: exports.scope,
-            extractors: exports.extractors.concat(extractors),
+            extractors: exports.extractors,
             filter: exports.filter
         };
 
         console.log("Creating graph.");
-        const objgraph = createObjGraph(config);
+        const objgraph = objGraph.createObjGraph(config);
         console.log("Graph created.");
 
-        function updateMxgraph() {
-            mxgraph.getModel().clear();
-            objgraph.toMxGraph(window.mxgraph);
-            let layout = new mxHierarchicalLayout(window.mxgraph);
-            layout.edgeStyle = mxHierarchicalEdgeStyle.CURVE;
-            layout.execute(window.mxgraph.getDefaultParent())
-        }
-        updateMxgraph();
-
-        function updateCytoscape() {
-            objgraph.toCytoscape(window.cytoscape);
-            window.cytoscape.layout({
+        function updateCytoscape(cytoscape) {
+            objgraph.toCytoscape(cytoscape);
+            cytoscape.layout({
                 name: "breadthfirst",
                 directed: true,
                 avoidOverlap: true,
@@ -91,11 +80,11 @@ class objGraphEditor {
             });
 
             console.log("Position of v0");
-            let position = window.cytoscape.$("#v0").position();
+            let position = cytoscape.$("#v0").position();
             console.log(position)
 
         }
-        updateCytoscape();
+        updateCytoscape(this.cytoscape);
 
 
     }
