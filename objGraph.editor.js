@@ -8,9 +8,9 @@ class objGraphEditor {
 
     buildGUI() {
         const d = window.document;
-        this.codeEditor = d.createElement("textarea", { style: "background: red;" });
+        this.codeEditor = d.createElement("textarea");
         this.graphContainer = d.createElement("div");
-        this.initCytoscape(this.graphContainer);
+        this.graphContainer.style = "width:50%; height:80%;";
 
         this.controls = d.createElement("div");
         this.evalButton = d.createElement("button", { value: "Evaluar" });
@@ -28,7 +28,7 @@ class objGraphEditor {
         if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
             
             this.codeEditor.value += "\n// MISSING module.exports.scope . EXAMPLE:";
-            this.codeEditor.value += objGraph.examples()[2];
+            this.codeEditor.value += objGraph.examples()[0];
             return false;
         }
         return true;
@@ -41,8 +41,8 @@ class objGraphEditor {
         const code = editor.value;
         const fun = new Function(
             "const module = {exports: {scope: null} };\n" +
-            code +
-            "\nreturn module.exports;");
+                code +
+                "\nreturn module.exports;");
         const exports = fun();
 
         if( !this.checkReturn(exports) ){
@@ -68,22 +68,58 @@ class objGraphEditor {
         const objgraph = objGraph.createObjGraph(config);
         console.log("Graph created.");
 
+
+        function doLayout(cytoscape){
+            let layout = cytoscape.layout({
+                name: "breadthfirst",
+                fit: true,
+                // whether to fit the viewport to the graph
+                directed: false,
+                // whether the tree is directed downwards (or edges can point in any direction if false)
+                padding: 30,
+                // padding on fit
+                circle: false,
+                // put depths in concentric circles if true, put depths top down if false
+                grid: false,
+                // whether to create an even grid into which the DAG is placed (circle:false only)
+                spacingFactor: 1.75,
+                // positive spacing factor, larger => more space between nodes (N.B. n/a if causes overlap)
+                boundingBox: undefined,
+                // constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
+                avoidOverlap: true,
+                // prevents node overlap, may overflow boundingBox if not enough space
+                nodeDimensionsIncludeLabels: false,
+                // Excludes the label when calculating node bounding boxes for the layout algorithm
+                roots: undefined,
+                // the roots of the trees
+                maximal: false,
+                // whether to shift nodes down their natural BFS depths in order to avoid upwards edges (DAGS only)
+                animate: true,
+                // whether to transition the node positions
+                animationDuration: 5000,
+                // duration of animation in ms if enabled
+                animationEasing: undefined,
+                // easing of animation if enabled,
+                animateFilter: function animateFilter(node, i) {
+                    return true;
+                },
+                // a function that determines whether the node should be animated.  All nodes animated by default on animate enabled.  Non-animated nodes are positioned immediately when the layout starts
+                ready: undefined,
+                // callback on layoutready
+                stop: undefined,
+                // callback on layoutstop
+
+            });
+            layout.run();
+        }
+        
         function updateCytoscape(cytoscape) {
             objgraph.toCytoscape(cytoscape);
-            cytoscape.layout({
-                name: "breadthfirst",
-                directed: true,
-                avoidOverlap: true,
-                nodeDimensionsIncludeLabels: true,
-                spacingFactor: 0.5,
-                maximalAdjustments: 100
-            });
+            window.setTimeout( ()=>doLayout(cytoscape) , 1000);
 
-            console.log("Position of v0");
-            let position = cytoscape.$("#v0").position();
-            console.log(position)
 
         }
+        this.initCytoscape(this.graphContainer);
         updateCytoscape(this.cytoscape);
 
 
@@ -132,41 +168,6 @@ class objGraphEditor {
         });
     }
 
-    initMxgraph(container) {
-        // Checks if the browser is supported
-        if (!mxClient.isBrowserSupported()) {
-            // Displays an error message if the browser is not supported.
-            mxUtils.error('Browser is not supported!', 200, false);
-        }
-        else {
-            // Disables the built-in context menu
-            mxEvent.disableContextMenu(container);
-
-            // Creates the graph inside the given container
-            var graph = new mxGraph(container);
-            this.mxgraph = graph;
-
-            graph.addListener(mxEvent.MOVE_CELLS, function (e) {
-            });
-
-            // Enables rubberband selection
-            new mxRubberband(graph);
-
-            // Changes the default vertex style in-place
-            var style = graph.getStylesheet().getDefaultVertexStyle();
-            style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
-            //style[mxConstants.STYLE_GRADIENTCOLOR] = 'white';
-            style[mxConstants.STYLE_PERIMETER_SPACING] = 6;
-            style[mxConstants.STYLE_ROUNDED] = true;
-            //style[mxConstants.STYLE_SHADOW] = true;
-
-            style = graph.getStylesheet().getDefaultEdgeStyle();
-            //style[mxConstants.STYLE_ROUNDED] = true;
-        }
-
-
-
-    }
 
 
 }
