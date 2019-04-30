@@ -80,12 +80,33 @@ const objGraph = (
         );
         ret.EnumerableOwnPropertiesExtractor = EnumerableOwnPropertiesExtractor;
 
+        function isPrototype(o){
+            return Object.prototype.hasOwnProperty.call(o,"constructor") && typeof o.constructor == "function";
+        }
+
+        function isSkipToString(o){
+            return typeof o === 'string' || o instanceof String || o.__skipToStringExtractor || isFunction(o);
+        }
+
+        function isFunction(functionToCheck) {
+            return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+        }
+
+
+        
         const ToStringExtractor = new Extractor(
             function(o){
-                if( typeof o != "string" && o.toString && !o.__skipToStringExtractor ){
-                    return [["toString", { __skipToStringExtractor: true, toString: function(){ return o.toString() } }]];
+                let ret = [];
+                if( isSkipToString(o) ){
+                    
                 }
-                return [];
+                else if( typeof o != "string" && o.toString ){
+                    const s = o.toString();
+                    ret =  [["toString", { __skipToStringExtractor: true, toString: function(){ return s; } }]];
+                }
+                console.log( "ToStringExtractor: " + ret );
+                console.log(o);
+                return ret;
             }
         );
         ret.ToStringExtractor = ToStringExtractor;
@@ -169,20 +190,22 @@ const objGraph = (
         ret.Nominator = Nominator;
 
         const DefaultNominator = new Nominator( function(o){
+
+            
             if( o == null ){
                 return "null";
             }
             if( typeof o == "undefined" ){
                 return "undefined";
             }
+            if( isPrototype(o) ){
+                return "prototype of:" + o.constructor.name;
+            }
             if( typeof o == "function" ){
                 if( o.name != "" ){
                     return "function:" + o.name;
                 }
                 return "anonymous function";
-            }
-            if( Object.prototype.hasOwnProperty.call(o,"constructor") && typeof o.constructor == "function" ){
-                return "prototype of:" + o.constructor.name;
             }
 
             let toString = null;
@@ -194,7 +217,7 @@ const objGraph = (
                 toStringError = e.toString();
             }
 
-            if (typeof o === 'string' || o instanceof String || o.__skipToStringExtractor ){
+            if ( isSkipToString(o) ){
                 return toString;
             }
             
@@ -203,7 +226,7 @@ const objGraph = (
                     return o.constructor.name + ":" + o.toString();
                 }
                 else{
-                    return o.constructor.name;
+                    return "instance of:" + o.constructor.name;
                 }
             }
 
@@ -337,6 +360,7 @@ const objGraph = (
             dump(out){
                 const g = this.graph;
                 const n = this.nominator;
+                console.log("En dump");
                 out("Graph:");
                 out("  Nodes:" + g.length );
 
@@ -351,6 +375,7 @@ const objGraph = (
             toCytoscape(cytoscapeGraph){
                 const g = this.graph;
                 const n = this.nominator;
+                const that = this;
 
                 const elements = [];
                 const find = function(o){
@@ -383,6 +408,10 @@ const objGraph = (
                         const edge = edges[j];
                         const to = edge.obj;
                         const toIndex = find(to);
+                        if( toIndex == null ){
+                            console.warn("No encuentro arista:" + edge )
+                            continue;
+                        }
                         const label = edge.name;
                         const e = {
                             data : {
@@ -530,11 +559,11 @@ class Perro extends Animal{
 }
 
 let mascota = new Perro("Pancho");
-module.exports.scope = [mascota];
+objGraph.scope = [mascota];
                  `,
                 `
 let scope = ["a","b","c",[1,2,[3,4,5],6,7],"d"];
-module.exports.scope = scope;
+objGraph.scope = scope;
                  `,
                 `
 class Node{
@@ -573,8 +602,8 @@ list.append("A");
 list.append("B");
 list.preppend("C");
 list.append("Soy el último");
-module.exports.scope = [list];
-module.exports.extractors = ["first","last","data","next","previous"];         
+objGraph.scope = [list];
+objGraph.extractors = ["first","last","data","next","previous"];         
 `
             ];
         }

@@ -3,32 +3,73 @@ console.log("Cargando objGraph.editor.js");
 class objGraphEditor {
     constructor(container) {
         this.container = container;
-        this.buildGUI();
+        this.buildGUI(this.container);
     }
 
-    buildGUI() {
+    buildGUI(container) {
         const d = window.document;
-        this.codeEditor = d.createElement("textarea");
-        this.graphContainer = d.createElement("div");
-        this.graphContainer.style = "width:50%; height:80%;";
+
+        function create(tag, style){
+            const ret = d.createElement(tag);
+            ret.style = style;
+            return ret;
+        }
+        
+        function addRow(container, label, component){
+            const row = d.createElement("row");
+            const labelC = d.createElement("label");
+            labelC.for = component;
+            labelC.innerHTML = label;
+            row.appendChild(labelC);
+            row.appendChild(component);
+            container.appendChild(row);
+        }
+        
+        this.codeEditor = create("textarea","display:inline-block;width:40%;height:80%;background:#222222;color:#aaaaaa");
+        this.verticalSeparator = create("div", "display:inline-block;width:5px;height:80%;background:red;overflow:visible;position:absolute");
+
+        this.button = create("input","margin:50px -50px 0px -50px;top:50%;background:blue;position:absolute");
+        this.button.innerHtml = "hola";
+        this.verticalSeparator.appendChild(this.button);
+        
+        this.graphContainer = create("div", "display:inline-block;width:40%;height:80%;");
 
         this.controls = d.createElement("div");
+
+        this.enumerablePropertiesCheck = d.createElement("input");
+        this.enumerablePropertiesCheck.type = "checkbox";
+        addRow(this.controls, "Todas las propiedades enumerables", this.enumerablePropertiesCheck );
+
+        this.toStringCheck = d.createElement("input");
+        this.toStringCheck.type = "checkbox";
+        addRow(this.controls, "Valor de <code>toString()</code>", this.toStringCheck );
+     
+        this.otherPropertiesText = d.createElement("input");
+        this.otherPropertiesText.type = "text";
+        addRow(this.controls, "Otras propiedades, separadas por coma", this.otherPropertiesText );
+
+        this.prototypeCheck = d.createElement("input");
+        this.prototypeCheck.type = "checkbox";
+        addRow(this.controls, "Herencia (<code>prototype</code>, <code>[[prototype]]</code> y <code>constructor</code>)", this.prototypeCheck );
+
+        
         this.evalButton = d.createElement("button", { value: "Evaluar" });
         this.evalButton.onclick = (e) => this.executeCodeEditor();
         this.controls.appendChild(this.evalButton);
 
 
-        this.container.appendChild(this.codeEditor);
-        this.container.appendChild(this.graphContainer);
-        this.container.appendChild(this.controls);
+        container.appendChild(this.codeEditor);
+        container.appendChild(this.verticalSeparator)
+        container.appendChild(this.graphContainer);
+        container.appendChild(this.controls);
     }
 
 
     checkReturn(exports){
-        if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
+        if( typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
             
-            this.codeEditor.value += "\n// MISSING module.exports.scope . EXAMPLE:";
-            this.codeEditor.value += objGraph.examples()[0];
+            this.codeEditor.value += "\n// MISSING objGraph.scope . EXAMPLE:";
+            this.codeEditor.value += objGraph.examples()[2];
             return false;
         }
         return true;
@@ -40,9 +81,14 @@ class objGraphEditor {
 
         const code = editor.value;
         const fun = new Function(
-            "const module = {exports: {scope: null} };\n" +
-                code +
-                "\nreturn module.exports;");
+            `
+             const objGraph = {scope: null };
+             const window = "disabled";
+             const document = "disabled";
+             ${code}
+             return objGraph;
+            `
+        );
         const exports = fun();
 
         if( !this.checkReturn(exports) ){
@@ -50,13 +96,27 @@ class objGraphEditor {
         }
 
 
-        if (!exports.extractors) {
+        if (!exports.extractors || !Array.isArray(exports.extractors)) {
             exports.extractors = [];
         }
 
+        if(this.enumerablePropertiesCheck.checked ){
+            exports.extractors.push(objGraph.EnumerablePropertiesExtractor);
+        }
 
+        if(this.prototypeCheck.checked ){
+            exports.extractors.push(objGraph.PrototypeExtractor);
+            exports.extractors.push("prototype");
+            exports.extractors.push( new objGraph.OwnPropertiesExtractor(["constructor"]) );
+        }
 
+        if(this.toStringCheck.checked ){
+            exports.extractors.push(objGraph.ToStringExtractor);
+        }
 
+        this.otherPropertiesText.value.
+            split(/[\s,]+/).
+            forEach( p => exports.extractors.push(p) );
 
         const config = {
             scope: exports.scope,
@@ -96,7 +156,7 @@ class objGraphEditor {
                 // whether to shift nodes down their natural BFS depths in order to avoid upwards edges (DAGS only)
                 animate: true,
                 // whether to transition the node positions
-                animationDuration: 5000,
+                animationDuration: 200,
                 // duration of animation in ms if enabled
                 animationEasing: undefined,
                 // easing of animation if enabled,
@@ -115,7 +175,7 @@ class objGraphEditor {
         
         function updateCytoscape(cytoscape) {
             objgraph.toCytoscape(cytoscape);
-            window.setTimeout( ()=>doLayout(cytoscape) , 1000);
+            window.setTimeout( ()=>doLayout(cytoscape) , 0);
 
 
         }
