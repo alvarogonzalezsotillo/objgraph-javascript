@@ -35,7 +35,7 @@ class objGraphEditor {
         this.verticalSeparator = create("div", { style: `display:inline-block;width:1%;height:${h};background:red;overflow:visible;position:absolute;z-index:1;`});
 
         this.buttonViewCode = create("input",{
-            style: "width: 100px; margin:50px -50px 0px -50px;top:50%;position:absolute",
+            style: "width: 100px; height: 8%; margin:50px -50px 0px -50px;top:40%;position:absolute",
             type: "button",
             value: ">>",
             onclick : function(){
@@ -44,8 +44,18 @@ class objGraphEditor {
             }
         } );
 
+        this.buttonViewBoth = create("input",{
+            style: "width: 100px; height: 8%; margin:50px -50px 0px -50px;top:50%;position:absolute",
+            type: "button",
+            value: "<>",
+            onclick : function(){
+                self.codeEditor.style.width = "48%";
+                self.graphContainer.style.width = "48%";
+            }
+        } );
+
         this.buttonViewGraph = create("input",{
-            style: "width: 100px; margin:50px -50px 0px -50px;top:60%;position:absolute",
+            style: "width: 100px; height: 8%; margin:50px -50px 0px -50px;top:60%;position:absolute",
             type: "button",
             value: "<<",
             onclick : function(){
@@ -56,6 +66,7 @@ class objGraphEditor {
 
 
         this.verticalSeparator.appendChild(this.buttonViewCode);
+        this.verticalSeparator.appendChild(this.buttonViewBoth);
         this.verticalSeparator.appendChild(this.buttonViewGraph);
         
         this.graphContainer = create("div", {style : `display:inline-block;width:48%;height:${h};`});
@@ -79,7 +90,7 @@ class objGraphEditor {
         addRow(this.controls, "Herencia (<code>prototype</code>, <code>[[prototype]]</code> y <code>constructor</code>)", this.prototypeCheck );
 
         
-        this.evalButton = d.createElement("button", { value: "Evaluar" });
+        this.evalButton = create("input", { type: "button", value: "Evaluar" });
         this.evalButton.onclick = (e) => this.executeCodeEditor();
         this.controls.appendChild(this.evalButton);
 
@@ -223,14 +234,15 @@ class objGraphEditor {
                     selector: 'node',
                     style: {
                         'content': 'data(label)',
-                        'text-opacity': 0.5,
+                        'text-opacity': 1,
                         'text-valign': 'center',
                         'text-halign': 'right',
-                        'background-color': '#11479e',
+                        'background-color': 'lightblue',
+                        'font-size': '40px',
                         width: 'label',
                         height: 'label',
                         shape: 'rectangle',
-                        'padding': '50',
+                        'padding': '25',
                         'border-width': '1px',
                         'padding-relative-to': 'min',
                         'text-valign': 'center',
@@ -244,6 +256,7 @@ class objGraphEditor {
                         content: 'data(label)',
                         'curve-style': 'bezier',
                         'width': 4,
+                        'font-size': '40px',
                         'target-arrow-shape': 'triangle',
                         'line-color': '#9dbaea',
                         'target-arrow-color': '#9dbaea',
