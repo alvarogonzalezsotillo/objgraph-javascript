@@ -9,9 +9,11 @@ class objGraphEditor {
     buildGUI(container) {
         const d = window.document;
 
-        function create(tag, style){
+        function create(tag, attrs){
             const ret = d.createElement(tag);
-            ret.style = style;
+            for( var attr in attrs ){
+                ret[attr] = attrs[attr];
+            }
             return ret;
         }
         
@@ -24,15 +26,39 @@ class objGraphEditor {
             row.appendChild(component);
             container.appendChild(row);
         }
-        
-        this.codeEditor = create("textarea","display:inline-block;width:40%;height:80%;background:#222222;color:#aaaaaa");
-        this.verticalSeparator = create("div", "display:inline-block;width:5px;height:80%;background:red;overflow:visible;position:absolute");
 
-        this.button = create("input","margin:50px -50px 0px -50px;top:50%;background:blue;position:absolute");
-        this.button.innerHtml = "hola";
-        this.verticalSeparator.appendChild(this.button);
+        const self = this;
+        const h = "90%";
         
-        this.graphContainer = create("div", "display:inline-block;width:40%;height:80%;");
+        
+        this.codeEditor = create("textarea",{ style: `display:inline-block;width:48%;height:${h};background:#222222;color:#aaaaaa;` } );
+        this.verticalSeparator = create("div", { style: `display:inline-block;width:1%;height:${h};background:red;overflow:visible;position:absolute;z-index:1;`});
+
+        this.buttonViewCode = create("input",{
+            style: "width: 100px; margin:50px -50px 0px -50px;top:50%;position:absolute",
+            type: "button",
+            value: ">>",
+            onclick : function(){
+                self.codeEditor.style.width = "98%";
+                self.graphContainer.style.width = "1%";
+            }
+        } );
+
+        this.buttonViewGraph = create("input",{
+            style: "width: 100px; margin:50px -50px 0px -50px;top:60%;position:absolute",
+            type: "button",
+            value: "<<",
+            onclick : function(){
+                self.codeEditor.style.width = "1%";
+                self.graphContainer.style.width = "98%";
+            }
+        } );
+
+
+        this.verticalSeparator.appendChild(this.buttonViewCode);
+        this.verticalSeparator.appendChild(this.buttonViewGraph);
+        
+        this.graphContainer = create("div", {style : `display:inline-block;width:48%;height:${h};`});
 
         this.controls = d.createElement("div");
 
@@ -59,7 +85,7 @@ class objGraphEditor {
 
 
         container.appendChild(this.codeEditor);
-        container.appendChild(this.verticalSeparator)
+        container.appendChild(this.verticalSeparator);
         container.appendChild(this.graphContainer);
         container.appendChild(this.controls);
     }
