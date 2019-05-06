@@ -12,7 +12,14 @@ class objGraphEditor {
         function create(tag, attrs){
             const ret = d.createElement(tag);
             for( var attr in attrs ){
-                ret[attr] = attrs[attr];
+                if( attr == "style" && typeof attrs.style != "string" ){
+                    for( var s in attrs.style ){
+                        ret.style[s] = attrs.style[s];
+                    }
+                }
+                else{
+                    ret[attr] = attrs[attr];
+                }
             }
             return ret;
         }
@@ -31,13 +38,22 @@ class objGraphEditor {
         const h = "90%";
         
         
-        this.codeEditor = create("textarea",{ style: `display:inline-block;width:48%;height:${h};background:#222222;color:#aaaaaa;` } );
-        this.verticalSeparator = create("div", { style: `display:inline-block;width:1%;height:${h};background:red;overflow:visible;position:absolute;z-index:1;`});
+        this.codeEditor = create("textarea",{
+            style: {
+                display:"inline-block",
+                width: "48%",
+                height: `${h}`,
+                background: "#222222",
+                color:"#aaaaaa"
+            }
+        });
+   
+        this.verticalSeparator = create("div", { style: `display:inline-block;width:1px;height:${h};background:red;overflow:visible;position:absolute;z-index:1;`});
 
         this.buttonViewCode = create("input",{
             style: "width: 100px; height: 8%; margin:50px -50px 0px -50px;top:40%;position:absolute",
             type: "button",
-            value: ">>",
+            value: "→",
             onclick : function(){
                 self.codeEditor.style.width = "98%";
                 self.graphContainer.style.width = "1%";
@@ -47,7 +63,7 @@ class objGraphEditor {
         this.buttonViewBoth = create("input",{
             style: "width: 100px; height: 8%; margin:50px -50px 0px -50px;top:50%;position:absolute",
             type: "button",
-            value: "<>",
+            value: "↔",
             onclick : function(){
                 self.codeEditor.style.width = "48%";
                 self.graphContainer.style.width = "48%";
@@ -57,17 +73,26 @@ class objGraphEditor {
         this.buttonViewGraph = create("input",{
             style: "width: 100px; height: 8%; margin:50px -50px 0px -50px;top:60%;position:absolute",
             type: "button",
-            value: "<<",
+            value: "←",
             onclick : function(){
                 self.codeEditor.style.width = "1%";
                 self.graphContainer.style.width = "98%";
             }
         } );
 
+        this.evalButton = create("input", {
+            style: "margin:50px -50px 0px -150px;bottom:5%;position:absolute",
+            type: "button",
+            value: "Evaluar",
+            onclick: (e) => self.executeCodeEditor()
+        
+        });
+
 
         this.verticalSeparator.appendChild(this.buttonViewCode);
         this.verticalSeparator.appendChild(this.buttonViewBoth);
         this.verticalSeparator.appendChild(this.buttonViewGraph);
+        this.verticalSeparator.appendChild(this.evalButton);
         
         this.graphContainer = create("div", {style : `display:inline-block;width:48%;height:${h};`});
 
@@ -90,15 +115,14 @@ class objGraphEditor {
         addRow(this.controls, "Herencia (<code>prototype</code>, <code>[[prototype]]</code> y <code>constructor</code>)", this.prototypeCheck );
 
         
-        this.evalButton = create("input", { type: "button", value: "Evaluar" });
-        this.evalButton.onclick = (e) => this.executeCodeEditor();
-        this.controls.appendChild(this.evalButton);
 
 
         container.appendChild(this.codeEditor);
         container.appendChild(this.verticalSeparator);
         container.appendChild(this.graphContainer);
         container.appendChild(this.controls);
+
+        this.buttonViewCode.click();
     }
 
 
@@ -132,6 +156,8 @@ class objGraphEditor {
             return;
         }
 
+        this.buttonViewBoth.click();
+
 
         if (!exports.extractors || !Array.isArray(exports.extractors)) {
             exports.extractors = [];
@@ -161,11 +187,8 @@ class objGraphEditor {
             filter: exports.filter
         };
 
-        console.log("Creating graph.");
         const objgraph = objGraph.createObjGraph(config);
-        console.log("Graph created.");
-
-
+ 
         function doLayout(cytoscape){
             let layout = cytoscape.layout({
                 name: "breadthfirst",
@@ -191,7 +214,7 @@ class objGraphEditor {
                 // the roots of the trees
                 maximal: false,
                 // whether to shift nodes down their natural BFS depths in order to avoid upwards edges (DAGS only)
-                animate: true,
+                animate: false,
                 // whether to transition the node positions
                 animationDuration: 200,
                 // duration of animation in ms if enabled
@@ -212,7 +235,8 @@ class objGraphEditor {
         
         function updateCytoscape(cytoscape) {
             objgraph.toCytoscape(cytoscape);
-            window.setTimeout( ()=>doLayout(cytoscape) , 0);
+            doLayout(cytoscape);
+            //window.setTimeout( ()=>doLayout(cytoscape) , 0);
 
 
         }
@@ -255,8 +279,9 @@ class objGraphEditor {
                     style: {
                         content: 'data(label)',
                         'curve-style': 'bezier',
+                        'arrow-scale' : 2,
                         'width': 4,
-                        'font-size': '40px',
+                        'font-size': '30px',
                         'target-arrow-shape': 'triangle',
                         'line-color': '#9dbaea',
                         'target-arrow-color': '#9dbaea',

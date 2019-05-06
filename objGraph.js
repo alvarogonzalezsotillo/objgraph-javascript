@@ -19,6 +19,22 @@ const objGraph = (
                 }
                 return this._func(o);
             }
+
+            static FromString(s){
+
+                const map = {
+                    "[[prototype]]": PrototypeExtractor,
+                    "[[toString]]": ToStringExtractor,
+                    "[[OwnProperties]]": EnumerableOwnPropertiesExtractor,
+                    "[[EnumerableProperties]]" : EnumerablePropertiesExtractor
+                };
+
+                if( map[s] != undefined ){
+                    return map[s];
+                }
+                
+                return new PropertiesExtractor([s]);
+            }
         }
         ret.Extractor = Extractor;
         
@@ -270,7 +286,7 @@ const objGraph = (
                 log( "ObjGraph: objects:" + objects );
                 extractors = extractors.map( function(e){
                     if( typeof e == "string" ){
-                        return new PropertiesExtractor([e]);
+                        return Extractor.FromString(e);
                     }
                     else{
                         return e;
@@ -409,7 +425,9 @@ const objGraph = (
                         const to = edge.obj;
                         const toIndex = find(to);
                         if( toIndex == null ){
-                            console.warn("No encuentro arista:" + edge )
+                            console.warn("No encuentro arista:" );
+                            console.warn(list);
+                            console.warn(edge);
                             continue;
                         }
                         const label = edge.name;
