@@ -9,13 +9,22 @@ class objGraphEditor {
     buildGUI(container) {
         const d = window.document;
 
+        function applyStyle(elem,style){
+            if( typeof style != "string" ){
+                for( var s in style ){
+                    elem.style[s] = style[s];
+                }
+            }
+            else{
+                elem.style = style;
+            }
+        }
+        
         function create(tag, attrs){
             const ret = d.createElement(tag);
             for( var attr in attrs ){
-                if( attr == "style" && typeof attrs.style != "string" ){
-                    for( var s in attrs.style ){
-                        ret.style[s] = attrs.style[s];
-                    }
+                if( attr == "style" ){
+                    applyStyle(ret,attrs["style"]);
                 }
                 else{
                     ret[attr] = attrs[attr];
@@ -122,6 +131,15 @@ class objGraphEditor {
         container.appendChild(this.graphContainer);
         container.appendChild(this.controls);
 
+        this.codeMirrorEditor = CodeMirror.fromTextArea(this.codeEditor);
+        console.log(this.codeMirrorEditor);
+        applyStyle(this.codeMirrorEditor.display.wrapper,{
+            display:"inline-block",
+            width: "48%",
+            height: `${h}`,
+        });
+
+        
         this.buttonViewCode.click();
     }
 
@@ -131,6 +149,9 @@ class objGraphEditor {
             
             this.codeEditor.value += "\n// MISSING objGraph.scope . EXAMPLE:";
             this.codeEditor.value += objGraph.examples()[2];
+
+            this.codeMirrorEditor.getDoc().setValue( this.codeEditor.value );
+            
             return false;
         }
         return true;
