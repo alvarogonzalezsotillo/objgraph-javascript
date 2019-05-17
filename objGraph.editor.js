@@ -47,15 +47,35 @@ class objGraphEditor {
         const h = "90%";
         
         
-        this.codeEditor = create("textarea",{
-            style: {
-                display:"inline-block",
-                width: "48%",
-                height: `${h}`,
-                background: "#222222",
-                color:"#aaaaaa"
+
+        this.codeMirrorEditor = new CodeMirror(container);
+        console.log(this.codeMirrorEditor);
+        const cmWrapper = this.codeMirrorEditor.display.wrapper;
+
+        const lineSeparator = "// Reservado para la configuración mediante GUI";
+
+        
+        // RESERVO LAS ÚLTIMAS 5 LÍNEAS PARA LOS EXTRACTORES
+        this.codeMirrorEditor.on('beforeChange',function(cm,change) {
+            const lines = cm.lineCount();
+            if ( lines < 6 ){
+                return;
+            }
+            const limit = lines-5;
+            if ( change.to.line >= limit || change.from.line >= limit ) {
+                change.cancel();
             }
         });
+
+        applyStyle(cmWrapper,{
+            display:"inline-block",
+            width: "48%",
+            height: `${h}`,
+        });
+
+
+        
+
    
         this.verticalSeparator = create("div", { style: `display:inline-block;width:1px;height:${h};background:red;overflow:visible;position:absolute;z-index:1;`});
 
@@ -64,7 +84,7 @@ class objGraphEditor {
             type: "button",
             value: "→",
             onclick : function(){
-                self.codeEditor.style.width = "98%";
+                cmWrapper.style.width = "98%";
                 self.graphContainer.style.width = "1%";
             }
         } );
@@ -74,7 +94,7 @@ class objGraphEditor {
             type: "button",
             value: "↔",
             onclick : function(){
-                self.codeEditor.style.width = "48%";
+                cmWrapper.style.width = "48%";
                 self.graphContainer.style.width = "48%";
             }
         } );
@@ -84,7 +104,7 @@ class objGraphEditor {
             type: "button",
             value: "←",
             onclick : function(){
-                self.codeEditor.style.width = "1%";
+                cmWrapper.style.width = "1%";
                 self.graphContainer.style.width = "98%";
             }
         } );
@@ -126,18 +146,10 @@ class objGraphEditor {
         
 
 
-        container.appendChild(this.codeEditor);
         container.appendChild(this.verticalSeparator);
         container.appendChild(this.graphContainer);
         container.appendChild(this.controls);
 
-        this.codeMirrorEditor = CodeMirror.fromTextArea(this.codeEditor);
-        console.log(this.codeMirrorEditor);
-        applyStyle(this.codeMirrorEditor.display.wrapper,{
-            display:"inline-block",
-            width: "48%",
-            height: `${h}`,
-        });
 
         
         this.buttonViewCode.click();
@@ -147,10 +159,10 @@ class objGraphEditor {
     checkReturn(exports){
         if( typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
             
-            this.codeEditor.value += "\n// MISSING objGraph.scope . EXAMPLE:";
-            this.codeEditor.value += objGraph.examples()[2];
-
-            this.codeMirrorEditor.getDoc().setValue( this.codeEditor.value );
+            let example = this.codeMirrorEditor.getDoc().getValue() + "\n// MISSING objGraph.scope . EXAMPLE:";
+            example += objGraph.examples()[2];
+            console.log(example);
+            this.codeMirrorEditor.getDoc().setValue( example );
             
             return false;
         }
@@ -159,9 +171,9 @@ class objGraphEditor {
 
 
     executeCodeEditor() {
-        const editor = this.codeEditor;
+        const editor = this.codeMirrorEditor;
 
-        const code = editor.value;
+        const code = editor.getValue();
         const fun = new Function(
             `
              const objGraph = {scope: null };
