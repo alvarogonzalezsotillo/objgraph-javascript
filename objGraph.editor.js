@@ -3,8 +3,12 @@ console.log("Cargando objGraph.editor.js");
 class objGraphEditor {
     constructor(container) {
         this.container = container;
+        this.lineSeparatorEnabled = true;
+        this.lineSeparator = "// Reservado para la configuración mediante GUI";
         this.buildGUI(this.container);
+
     }
+
 
     buildGUI(container) {
         const d = window.document;
@@ -52,17 +56,32 @@ class objGraphEditor {
         console.log(this.codeMirrorEditor);
         const cmWrapper = this.codeMirrorEditor.display.wrapper;
 
-        const lineSeparator = "// Reservado para la configuración mediante GUI";
+
+        const doc = this.codeMirrorEditor.getDoc();
+        doc.setValue( "\n\n" + this.lineSeparator );
+
+        function lineOfSeparator(){
+            for( let l = doc.lineCount()-1 ; l >= 0 ; l -= 1 ){
+                const line = doc.getLine(l);
+                if( line.includes( self.lineSeparator ) ){
+                    return l
+                }
+            }
+            return 1;
+        }
 
         
-        // RESERVO LAS ÚLTIMAS 5 LÍNEAS PARA LOS EXTRACTORES
         this.codeMirrorEditor.on('beforeChange',function(cm,change) {
-            const lines = cm.lineCount();
-            if ( lines < 6 ){
+            const limit = lineOfSeparator();
+            console.log("beforeChange:" + self.lineSeparatorEnabled );
+            if( !self.lineSeparatorEnabled ){
+                console.log("beforeChange: sin habilitar"  );
                 return;
             }
-            const limit = lines-5;
+            console.log("beforeChange: miro la línea:" + limit  );
+            
             if ( change.to.line >= limit || change.from.line >= limit ) {
+                console.log("beforeChange: cancelo el cambio" );
                 change.cancel();
             }
         });
@@ -76,7 +95,7 @@ class objGraphEditor {
 
         
 
-   
+        
         this.verticalSeparator = create("div", { style: `display:inline-block;width:1px;height:${h};background:red;overflow:visible;position:absolute;z-index:1;`});
 
         this.buttonViewCode = create("input",{
@@ -114,7 +133,7 @@ class objGraphEditor {
             type: "button",
             value: "Evaluar",
             onclick: (e) => self.executeCodeEditor()
-        
+            
         });
 
 
@@ -134,7 +153,7 @@ class objGraphEditor {
         this.toStringCheck = d.createElement("input");
         this.toStringCheck.type = "checkbox";
         addRow(this.controls, "Valor de <code>toString()</code>", this.toStringCheck );
-     
+        
         this.otherPropertiesText = d.createElement("input");
         this.otherPropertiesText.type = "text";
         addRow(this.controls, "Otras propiedades, separadas por coma", this.otherPropertiesText );
@@ -157,12 +176,28 @@ class objGraphEditor {
 
 
     checkReturn(exports){
-        if( typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
-            
+        if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
+            console.log("Sin exports");
             let example = this.codeMirrorEditor.getDoc().getValue() + "\n// MISSING objGraph.scope . EXAMPLE:";
             example += objGraph.examples()[2];
-            console.log(example);
-            this.codeMirrorEditor.getDoc().setValue( example );
+            example += "\n" + this.lineSeparator;
+
+            function dentroDeUnRato(f){
+                setTimeout( f, 1 );
+            }
+            
+            dentroDeUnRato( () => {
+                console.log("puesto a false");
+                this.lineSeparatorEnabled = false;
+                dentroDeUnRato( () =>{
+                    console.log("setValue");
+                    this.codeMirrorEditor.getDoc().setValue( example );
+                    dentroDeUnRato( () => {
+                        console.log("puesto a true");
+                        this.lineSeparatorEnabled = true;
+                    });
+                });
+            });
             
             return false;
         }
@@ -171,19 +206,52 @@ class objGraphEditor {
 
 
     executeCodeEditor() {
+
+        function evaluator(code){
+            let ret = {};
+            try{
+                // UTILIZO UN EVAL DENTRO DE UNA FUNCIÓN PARA RETRASAR EL PARSEO DEL code, Y
+                // ASÍ CONSEGUIR LA LÍNEA REAL DE ERROR (SI NO, SALE LA DEL eval/Function)
+                let f = new Function(`return eval(\`${code}\`);`);
+                ret.value = f();
+            }
+            catch(err){
+                // CHROME Y FIREFOX
+                ret.error = err;
+                ret.message = err.message;
+                ret.stack = err.stack;
+
+                // FIREFOX
+                ret.columnNumber = err.columnNumber;
+                ret.lineNumber = err.lineNumber;
+                ret.errorLine = code.split("\n")[err.lineNumber-1];
+
+            }
+
+            return ret;
+        }
+
+
+        
         const editor = this.codeMirrorEditor;
 
-        const code = editor.getValue();
-        const fun = new Function(
-            `
+        const code = `
              const objGraph = {scope: null };
              const window = "disabled";
              const document = "disabled";
-             ${code}
-             return objGraph;
-            `
-        );
-        const exports = fun();
+             const eval = "disabled";
+             const Function = "disabled";
+             ${editor.getValue()}
+             ;objGraph;
+        `;
+        console.log(code);
+        const results = evaluator(code);
+        console.log( results )
+        if( results.error ){
+            alert(results.stack);
+            return;
+        }
+        const exports = results.value;
 
         if( !this.checkReturn(exports) ){
             return;
@@ -221,7 +289,7 @@ class objGraphEditor {
         };
 
         const objgraph = objGraph.createObjGraph(config);
- 
+        
         function doLayout(cytoscape){
             let layout = cytoscape.layout({
                 name: "breadthfirst",
