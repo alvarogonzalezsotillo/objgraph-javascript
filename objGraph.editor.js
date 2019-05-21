@@ -1,13 +1,119 @@
 console.log("Cargando objGraph.editor.js");
 
 class objGraphEditor {
-    constructor(container) {
+    constructor(container,samples) {
+        this.samples = samples ? samples : objGraph.examples();
         this.container = container;
-        this.lineSeparatorEnabled = true;
-        this.lineSeparator = "// Reservado para la configuración mediante GUI";
+        this.separatorEnabled = true;
+        this.headerSeparator = "// A partir de aquí, el código que crea el grafo de objetos y configura extractores de propiedades";
+        this.footerSeparator = "// Reservado para la configuración mediante GUI";
         this.buildGUI(this.container);
-
     }
+
+
+    lineOfSeparator(str){
+        const doc = this.codeMirrorEditor.getDoc();
+        for( let l = doc.lineCount()-1 ; l >= 0 ; l -= 1 ){
+             const line = doc.getLine(l);
+             if( line.includes( str ) ){
+                 return l;
+             }
+         }
+        return -1;
+    }
+
+
+    markCodeMirror(){
+        /*
+        if( this.markers ){
+            this.markers.forEach( (m)=> m.clear() );
+        }
+        this.markers = [];
+
+        const readOnlyCSS = "background:repeating-linear-gradient(0deg,white,#dddddd 1px,white 1px,white 4px);";
+        
+        const endOfHeader = this.lineOfSeparator(this.headerSeparator);
+        const mH = this.codeMirrorEditor.markText(
+            {line: 0, ch: 0},
+            {line: endOfHeader+1, ch:0},
+            {css: readOnlyCSS });
+        this.markers.push(mH);
+
+        const doc = this.codeMirrorEditor.getDoc();
+        const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
+        const mF = this.codeMirrorEditor.markText(
+            {line: beginOfFooter, ch:0},
+            {line: doc.lineCount()+1, ch: 0},
+            {css: readOnlyCSS });
+        this.markers.push(mF);
+        */
+
+
+        const doc = this.codeMirrorEditor.getDoc();
+        const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
+        const endOfHeader = this.lineOfSeparator(this.headerSeparator);
+        
+
+        for( let i = 0 ; i < doc.lineCount() ; i++ ){
+            if( i <= endOfHeader || i >= beginOfFooter ){
+               this.codeMirrorEditor.addLineClass(i,"background","fondo-rayado");
+            }
+            else{
+                this.codeMirrorEditor.removeLineClass(i,"background","fondo-rayado");
+            }
+        }
+    }
+    
+    codeMirrorBeforeChange(cm,change){
+        
+        const inHeader = (c) => {
+            const endOfHeader = this.lineOfSeparator(this.headerSeparator);
+            if( endOfHeader == -1 ){
+                return false;
+            }
+            return c.to.line <= endOfHeader || c.from.line <= endOfHeader;
+        };
+    
+        const  inFooter = (c) => {
+            const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
+            if( beginOfFooter == -1 ){
+                return false;
+            }
+            return c.to.line >= beginOfFooter || c.from.line >= beginOfFooter;
+        };
+    
+        if( !this.separatorEnabled ){
+            console.log("beforeChange: sin habilitar"  );
+            return;
+        }
+
+        
+        
+        if ( inHeader(change) || inFooter(change) ){
+            console.log("beforeChange: cancelo el cambio" );
+            change.cancel();
+        }
+    }
+
+    computeContents(userCode){
+        return `
+// El grafo se realiza de los objetos en scope, con las propiedades de extractors
+const objGraph = {
+  scope: [],
+  extractors: []
+}; 
+
+// Sandbox parcial
+// const window = document = eval = Function = "Deshabilitado"; 
+
+${this.headerSeparator}
+
+${userCode}
+
+${this.footerSeparator}
+        `;
+    }
+
 
 
     buildGUI(container) {
@@ -47,49 +153,59 @@ class objGraphEditor {
             container.appendChild(row);
         }
 
+        const fillWithSample = (code) =>{
+            this.separatorEnabled = false;
+            const doc = this.codeMirrorEditor.getDoc();
+            doc.setValue( this.computeContents(code) );
+            this.markCodeMirror();
+            this.separatorEnabled = true;
+
+        };
+
+        
+        function buildSamplesMenu(samples){
+            const menu = create("div",{
+                
+            });
+            for( let i = 0 ; i < samples.length ; i++ ){
+                const name = samples[i].name;
+                const code = samples[i].code;
+
+                const menuItem = create("a",{
+                    onclick: function(){ fillWithSample(code); } 
+                });
+
+                menuItem.innerHTML = name;
+
+                menu.appendChild(menuItem);
+            }
+            return menu;
+        }
+        
+
         const self = this;
         const h = "90%";
         
         
 
-        this.codeMirrorEditor = new CodeMirror(container);
-        console.log(this.codeMirrorEditor);
+        this.codeMirrorEditor = new CodeMirror(container,{
+            mode : "javascript",
+            lineNumbers : true,
+            autofocus : true,
+        });
         const cmWrapper = this.codeMirrorEditor.display.wrapper;
 
 
-        const doc = this.codeMirrorEditor.getDoc();
-        doc.setValue( "\n\n" + this.lineSeparator );
-
-        function lineOfSeparator(){
-            for( let l = doc.lineCount()-1 ; l >= 0 ; l -= 1 ){
-                const line = doc.getLine(l);
-                if( line.includes( self.lineSeparator ) ){
-                    return l
-                }
-            }
-            return 1;
-        }
+        fillWithSample(`objGraph.scope.push("Objeto para el grafo");` );
 
         
-        this.codeMirrorEditor.on('beforeChange',function(cm,change) {
-            const limit = lineOfSeparator();
-            console.log("beforeChange:" + self.lineSeparatorEnabled );
-            if( !self.lineSeparatorEnabled ){
-                console.log("beforeChange: sin habilitar"  );
-                return;
-            }
-            console.log("beforeChange: miro la línea:" + limit  );
-            
-            if ( change.to.line >= limit || change.from.line >= limit ) {
-                console.log("beforeChange: cancelo el cambio" );
-                change.cancel();
-            }
-        });
+        this.codeMirrorEditor.on('beforeChange',this.codeMirrorBeforeChange.bind(this));
 
         applyStyle(cmWrapper,{
             display:"inline-block",
             width: "48%",
             height: `${h}`,
+            "z-index" : 0
         });
 
 
@@ -136,11 +252,17 @@ class objGraphEditor {
             
         });
 
+        this.sampleButton = create("input", {
+            style: "margin:50px -50px 0px -260px;bottom:5%;position:absolute",
+            type: "button",
+            value: "Ejemplos",
+        });
 
         this.verticalSeparator.appendChild(this.buttonViewCode);
         this.verticalSeparator.appendChild(this.buttonViewBoth);
         this.verticalSeparator.appendChild(this.buttonViewGraph);
         this.verticalSeparator.appendChild(this.evalButton);
+        this.verticalSeparator.appendChild(this.sampleButton);
         
         this.graphContainer = create("div", {style : `display:inline-block;width:48%;height:${h};`});
 
@@ -169,6 +291,7 @@ class objGraphEditor {
         container.appendChild(this.graphContainer);
         container.appendChild(this.controls);
 
+        container.appendChild(buildSamplesMenu(this.samples));
 
         
         this.buttonViewCode.click();
@@ -186,18 +309,9 @@ class objGraphEditor {
                 setTimeout( f, 1 );
             }
             
-            dentroDeUnRato( () => {
-                console.log("puesto a false");
-                this.lineSeparatorEnabled = false;
-                dentroDeUnRato( () =>{
-                    console.log("setValue");
-                    this.codeMirrorEditor.getDoc().setValue( example );
-                    dentroDeUnRato( () => {
-                        console.log("puesto a true");
-                        this.lineSeparatorEnabled = true;
-                    });
-                });
-            });
+            this.lineSeparatorEnabled = false;
+            this.codeMirrorEditor.getDoc().setValue( example );
+            this.lineSeparatorEnabled = true;
             
             return false;
         }
@@ -236,11 +350,6 @@ class objGraphEditor {
         const editor = this.codeMirrorEditor;
 
         const code = `
-             const objGraph = {scope: null };
-             const window = "disabled";
-             const document = "disabled";
-             const eval = "disabled";
-             const Function = "disabled";
              ${editor.getValue()}
              ;objGraph;
         `;

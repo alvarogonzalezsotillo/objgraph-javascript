@@ -551,6 +551,9 @@ const objGraph = (
 
         function examples(){
             return [
+                {
+                    name: "Herencia",
+                    code :
                 `
 class Animal{
   constructor(nombre){
@@ -578,11 +581,19 @@ class Perro extends Animal{
 
 let mascota = new Perro("Pancho");
 objGraph.scope = [mascota];
-                 `,
+                 `
+                },
+                {
+                    name: "Array",
+                    code:
                 `
 let scope = ["a","b","c",[1,2,[3,4,5],6,7],"d"];
-objGraph.scope = scope;
-                 `,
+objGraph.scope = [scope];
+                 `
+                },
+                {
+                    name: "Lista doblemente enlazada",
+                    code:
                 `
 class Node{
     constructor(data){
@@ -623,8 +634,10 @@ list.append("Soy el último");
 objGraph.scope = [list];
 objGraph.extractors = ["first","last","data","next","previous"];         
 `
+                }
             ];
         }
+        
         ret.examples = examples;
 
         return ret;
