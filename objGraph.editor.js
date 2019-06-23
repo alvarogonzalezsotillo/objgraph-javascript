@@ -74,7 +74,7 @@ class objGraphEditor {
             return c.to.line <= endOfHeader || c.from.line <= endOfHeader;
         };
     
-        const  inFooter = (c) => {
+        const inFooter = (c) => {
             const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
             if( beginOfFooter == -1 ){
                 return false;
@@ -86,8 +86,6 @@ class objGraphEditor {
             console.log("beforeChange: sin habilitar"  );
             return;
         }
-
-        
         
         if ( inHeader(change) || inFooter(change) ){
             console.log("beforeChange: cancelo el cambio" );
@@ -159,20 +157,31 @@ ${this.footerSeparator}
             doc.setValue( this.computeContents(code) );
             this.markCodeMirror();
             this.separatorEnabled = true;
-
+            if( this.samplesMenu ){
+                this.samplesMenu.style.display = "none";
+            }
         };
 
         
         function buildSamplesMenu(samples){
             const menu = create("div",{
-                
+                style: {
+                    "display" : "none",
+                    "position": "absolute",
+                }
+
             });
             for( let i = 0 ; i < samples.length ; i++ ){
                 const name = samples[i].name;
                 const code = samples[i].code;
 
-                const menuItem = create("a",{
-                    onclick: function(){ fillWithSample(code); } 
+                const menuItem = create("row",{
+                    onclick: function(){
+                        fillWithSample(code);
+                    },
+                    style: {
+                        "text-align" : "center"
+                    }
                 });
 
                 menuItem.innerHTML = name;
@@ -256,13 +265,22 @@ ${this.footerSeparator}
             style: "margin:50px -50px 0px -260px;bottom:5%;position:absolute",
             type: "button",
             value: "Ejemplos",
+            onclick : function(evt){
+                self.samplesMenu.style.display = "block";
+                self.samplesMenu.style.margin = self.sampleButton.style.margin;
+                self.samplesMenu.style.bottom = self.sampleButton.style.bottom;
+            }
         });
+
+        this.samplesMenu = buildSamplesMenu(this.samples);
+
 
         this.verticalSeparator.appendChild(this.buttonViewCode);
         this.verticalSeparator.appendChild(this.buttonViewBoth);
         this.verticalSeparator.appendChild(this.buttonViewGraph);
         this.verticalSeparator.appendChild(this.evalButton);
         this.verticalSeparator.appendChild(this.sampleButton);
+        this.verticalSeparator.appendChild(this.samplesMenu);
         
         this.graphContainer = create("div", {style : `display:inline-block;width:48%;height:${h};`});
 
@@ -291,7 +309,6 @@ ${this.footerSeparator}
         container.appendChild(this.graphContainer);
         container.appendChild(this.controls);
 
-        container.appendChild(buildSamplesMenu(this.samples));
 
         
         this.buttonViewCode.click();
