@@ -24,31 +24,6 @@ class objGraphEditor {
 
 
     markCodeMirror(){
-        /*
-          if( this.markers ){
-          this.markers.forEach( (m)=> m.clear() );
-          }
-          this.markers = [];
-
-          const readOnlyCSS = "background:repeating-linear-gradient(0deg,white,#dddddd 1px,white 1px,white 4px);";
-          
-          const endOfHeader = this.lineOfSeparator(this.headerSeparator);
-          const mH = this.codeMirrorEditor.markText(
-          {line: 0, ch: 0},
-          {line: endOfHeader+1, ch:0},
-          {css: readOnlyCSS });
-          this.markers.push(mH);
-
-          const doc = this.codeMirrorEditor.getDoc();
-          const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
-          const mF = this.codeMirrorEditor.markText(
-          {line: beginOfFooter, ch:0},
-          {line: doc.lineCount()+1, ch: 0},
-          {css: readOnlyCSS });
-          this.markers.push(mF);
-        */
-
-
         const doc = this.codeMirrorEditor.getDoc();
         const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
         const endOfHeader = this.lineOfSeparator(this.headerSeparator);
@@ -96,7 +71,7 @@ class objGraphEditor {
     computeContents(userCode){
         return `
 // El grafo se realiza de los objetos en scope, con las propiedades de extractors
-const objGraph = {
+const graph = {
   scope: [],
   extractors: []
 }; 
@@ -218,7 +193,7 @@ ${this.footerSeparator}
         const cmWrapper = this.codeMirrorEditor.display.wrapper;
 
 
-        fillWithSample(`objGraph.scope.push("Objeto para el grafo");` );
+        fillWithSample(`graph.scope.push("Objeto para el grafo");` );
 
         
         this.codeMirrorEditor.on('beforeChange',this.codeMirrorBeforeChange.bind(this));
@@ -331,14 +306,10 @@ ${this.footerSeparator}
     checkReturn(exports){
         if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
             console.log("Sin exports");
-            let example = this.codeMirrorEditor.getDoc().getValue() + "\n// MISSING objGraph.scope . EXAMPLE:";
+            let example = this.codeMirrorEditor.getDoc().getValue() + "\n// MISSING graph.scope . EXAMPLE:";
             example += objGraph.examples()[2];
             example += "\n" + this.lineSeparator;
 
-            function dentroDeUnRato(f){
-                setTimeout( f, 1 );
-            }
-            
             this.lineSeparatorEnabled = false;
             this.codeMirrorEditor.getDoc().setValue( example );
             this.lineSeparatorEnabled = true;
@@ -356,7 +327,7 @@ ${this.footerSeparator}
             try{
                 // UTILIZO UN EVAL DENTRO DE UNA FUNCIÓN PARA RETRASAR EL PARSEO DEL code, Y
                 // ASÍ CONSEGUIR LA LÍNEA REAL DE ERROR (SI NO, SALE LA DEL eval/Function)
-                let f = new Function(`return Function(\`${code}; return objGraph;\` )();`);
+                let f = new Function(`return Function(\`${code}; return graph;\` )();`);
                 ret.value = f();
             }
             catch(err){
@@ -379,13 +350,35 @@ ${this.footerSeparator}
         
         const editor = this.codeMirrorEditor;
 
+        const guiExtractorsCode = () => {
+            let ret = "";
+            if(this.prototypeCheck.checked ){
+                ret += 'graph.extractors.push(objGraph.PrototypeExtractor)\n';
+                ret += 'graph.extractors.push("prototype");\n';
+                ret += 'graph.extractors.push( new objGraph.OwnPropertiesExtractor(["constructor"]) );\n';
+            }
+
+            if(this.toStringCheck.checked ){
+                ret += 'graph.extractors.push(objGraph.ToStringExtractor);\n';
+            }
+
+            this.otherPropertiesText.value.
+                split(/[\s,]+/).
+                forEach( p => {if( p != "" ) ret += `graph.extractors.push("${p}");\n`} );
+
+            return ret;
+        }
+
         const code = `
              ${editor.getValue()}
-             ;objGraph;
+             ;
+             ${guiExtractorsCode()}
+             ;
         `;
+
         console.log(code);
+        
         const results = evaluator(code);
-        console.log( results )
         if( results.error ){
             alert(results.stack);
             return;
@@ -403,23 +396,6 @@ ${this.footerSeparator}
             exports.extractors = [];
         }
 
-        if(this.enumerablePropertiesCheck.checked ){
-            exports.extractors.push(objGraph.EnumerablePropertiesExtractor);
-        }
-
-        if(this.prototypeCheck.checked ){
-            exports.extractors.push(objGraph.PrototypeExtractor);
-            exports.extractors.push("prototype");
-            exports.extractors.push( new objGraph.OwnPropertiesExtractor(["constructor"]) );
-        }
-
-        if(this.toStringCheck.checked ){
-            exports.extractors.push(objGraph.ToStringExtractor);
-        }
-
-        this.otherPropertiesText.value.
-            split(/[\s,]+/).
-            forEach( p => exports.extractors.push(p) );
 
         const config = {
             scope: exports.scope,
