@@ -102,7 +102,8 @@ const objGraph = {
 }; 
 
 // Sandbox parcial
-// const window = document = eval = Function = "Deshabilitado"; 
+const window = "Deshabilitado"; const document = "Deshabilitado";
+const eval = "Deshabilitado"; const Function = "Deshabilitado";
 
 ${this.headerSeparator}
 
@@ -355,7 +356,7 @@ ${this.footerSeparator}
             try{
                 // UTILIZO UN EVAL DENTRO DE UNA FUNCIÓN PARA RETRASAR EL PARSEO DEL code, Y
                 // ASÍ CONSEGUIR LA LÍNEA REAL DE ERROR (SI NO, SALE LA DEL eval/Function)
-                let f = new Function(`return eval(\`${code}\`);`);
+                let f = new Function(`return Function(\`${code}; return objGraph;\` )();`);
                 ret.value = f();
             }
             catch(err){
