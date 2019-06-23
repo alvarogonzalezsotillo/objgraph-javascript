@@ -14,38 +14,38 @@ class objGraphEditor {
     lineOfSeparator(str){
         const doc = this.codeMirrorEditor.getDoc();
         for( let l = doc.lineCount()-1 ; l >= 0 ; l -= 1 ){
-             const line = doc.getLine(l);
-             if( line.includes( str ) ){
-                 return l;
-             }
-         }
+            const line = doc.getLine(l);
+            if( line.includes( str ) ){
+                return l;
+            }
+        }
         return -1;
     }
 
 
     markCodeMirror(){
         /*
-        if( this.markers ){
-            this.markers.forEach( (m)=> m.clear() );
-        }
-        this.markers = [];
+          if( this.markers ){
+          this.markers.forEach( (m)=> m.clear() );
+          }
+          this.markers = [];
 
-        const readOnlyCSS = "background:repeating-linear-gradient(0deg,white,#dddddd 1px,white 1px,white 4px);";
-        
-        const endOfHeader = this.lineOfSeparator(this.headerSeparator);
-        const mH = this.codeMirrorEditor.markText(
-            {line: 0, ch: 0},
-            {line: endOfHeader+1, ch:0},
-            {css: readOnlyCSS });
-        this.markers.push(mH);
+          const readOnlyCSS = "background:repeating-linear-gradient(0deg,white,#dddddd 1px,white 1px,white 4px);";
+          
+          const endOfHeader = this.lineOfSeparator(this.headerSeparator);
+          const mH = this.codeMirrorEditor.markText(
+          {line: 0, ch: 0},
+          {line: endOfHeader+1, ch:0},
+          {css: readOnlyCSS });
+          this.markers.push(mH);
 
-        const doc = this.codeMirrorEditor.getDoc();
-        const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
-        const mF = this.codeMirrorEditor.markText(
-            {line: beginOfFooter, ch:0},
-            {line: doc.lineCount()+1, ch: 0},
-            {css: readOnlyCSS });
-        this.markers.push(mF);
+          const doc = this.codeMirrorEditor.getDoc();
+          const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
+          const mF = this.codeMirrorEditor.markText(
+          {line: beginOfFooter, ch:0},
+          {line: doc.lineCount()+1, ch: 0},
+          {css: readOnlyCSS });
+          this.markers.push(mF);
         */
 
 
@@ -56,7 +56,7 @@ class objGraphEditor {
 
         for( let i = 0 ; i < doc.lineCount() ; i++ ){
             if( i <= endOfHeader || i >= beginOfFooter ){
-               this.codeMirrorEditor.addLineClass(i,"background","fondo-rayado");
+                this.codeMirrorEditor.addLineClass(i,"background","fondo-rayado");
             }
             else{
                 this.codeMirrorEditor.removeLineClass(i,"background","fondo-rayado");
@@ -73,7 +73,7 @@ class objGraphEditor {
             }
             return c.to.line <= endOfHeader || c.from.line <= endOfHeader;
         };
-    
+        
         const inFooter = (c) => {
             const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
             if( beginOfFooter == -1 ){
@@ -81,7 +81,7 @@ class objGraphEditor {
             }
             return c.to.line >= beginOfFooter || c.from.line >= beginOfFooter;
         };
-    
+        
         if( !this.separatorEnabled ){
             console.log("beforeChange: sin habilitar"  );
             return;
@@ -122,6 +122,15 @@ ${this.footerSeparator}
             // CHECK IF CLICK WAS OUTSIDE A VISIBLE MENU, TO HIDE IT
             if( this.samplesMenu && !this.samplesMenu.contains(event.target) ){
                 this.samplesMenu.style.display = "none";
+            }
+        });
+
+        d.addEventListener("keydown", (event)=> {
+            if(event.key === "Escape") {
+                // CHECK THERE IS A VISIBLE MENU, TO HIDE IT
+                if( this.samplesMenu ){
+                    this.samplesMenu.style.display = "none";
+                }
             }
         });
 
