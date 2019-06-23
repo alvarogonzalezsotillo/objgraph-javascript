@@ -115,7 +115,15 @@ ${this.footerSeparator}
 
 
     buildGUI(container) {
+
+        
         const d = window.document;
+        d.addEventListener("mousedown", (event)=> {
+            // CHECK IF CLICK WAS OUTSIDE A VISIBLE MENU, TO HIDE IT
+            if( this.samplesMenu && !this.samplesMenu.contains(event.target) ){
+                this.samplesMenu.style.display = "none";
+            }
+        });
 
         function applyStyle(elem,style){
             if( typeof style != "string" ){
@@ -164,7 +172,7 @@ ${this.footerSeparator}
 
         
         function buildSamplesMenu(samples){
-            const menu = create("div",{
+            const menu = create("menu",{
                 style: {
                     "display" : "none",
                     "position": "absolute",
@@ -175,13 +183,8 @@ ${this.footerSeparator}
                 const name = samples[i].name;
                 const code = samples[i].code;
 
-                const menuItem = create("row",{
-                    onclick: function(){
-                        fillWithSample(code);
-                    },
-                    style: {
-                        "text-align" : "center"
-                    }
+                const menuItem = create("menu-item",{
+                    onclick: ()=> fillWithSample(code),
                 });
 
                 menuItem.innerHTML = name;
