@@ -38,6 +38,32 @@ class objGraphEditor {
             }
         }
     }
+
+
+    updateGuiExtractorsCode(){
+        const endOfHeader = this.lineOfSeparator(this.headerSeparator);
+        const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
+        console.log( `endOfHeader:${endOfHeader}  beginOfFooter:${beginOfFooter}`);
+        this.separatorEnabled = false;
+        try{
+            const doc = this.codeMirrorEditor.getDoc();
+            let userCode = "";
+            let ini = endOfHeader+1;
+            let end = beginOfFooter-1;
+            for( let line = ini; line <= end ; line++ ){
+                let theLine = doc.getLine(line);
+                console.log( `line:${line} theLine:${theLine}`);
+                userCode += theLine
+                if( line != ini && line < end-1 ){
+                    userCode += "\n";
+                }
+            }
+            this.fillWithSample(userCode);
+        }
+        finally{
+            this.separatorEnabled = true;
+        }
+    }
     
     codeMirrorBeforeChange(cm,change){
         
@@ -85,9 +111,20 @@ ${this.headerSeparator}
 ${userCode}
 
 ${this.footerSeparator}
+${this.guiExtractorsCode()}
         `;
     }
 
+    fillWithSample(code){
+        this.separatorEnabled = false;
+        const doc = this.codeMirrorEditor.getDoc();
+        doc.setValue( this.computeContents(code) );
+        this.markCodeMirror();
+        this.separatorEnabled = true;
+        if( this.samplesMenu ){
+            this.samplesMenu.style.display = "none";
+        }
+    }
 
 
     buildGUI(container) {
@@ -144,23 +181,16 @@ ${this.footerSeparator}
             container.appendChild(row);
         }
 
-        const fillWithSample = (code) =>{
-            this.separatorEnabled = false;
-            const doc = this.codeMirrorEditor.getDoc();
-            doc.setValue( this.computeContents(code) );
-            this.markCodeMirror();
-            this.separatorEnabled = true;
-            if( this.samplesMenu ){
-                this.samplesMenu.style.display = "none";
-            }
-        };
 
         
-        function buildSamplesMenu(samples){
+        const buildSamplesMenu = (samples)=>{
             const menu = create("menu",{
                 style: {
                     "display" : "none",
                     "position": "absolute",
+                    //"margin": "50px -250px 0px -350px",
+                    "padding": "0px 0px 0px 0px",
+                    "top": "15px"
                 }
 
             });
@@ -169,7 +199,7 @@ ${this.footerSeparator}
                 const code = samples[i].code;
 
                 const menuItem = create("menu-item",{
-                    onclick: ()=> fillWithSample(code),
+                    onclick: ()=> this.fillWithSample(code),
                 });
 
                 menuItem.innerHTML = name;
@@ -193,7 +223,7 @@ ${this.footerSeparator}
         const cmWrapper = this.codeMirrorEditor.display.wrapper;
 
 
-        fillWithSample(`graph.scope.push("Objeto para el grafo");` );
+        this.fillWithSample(`graph.scope.push("Objeto para el grafo");` );
 
         
         this.codeMirrorEditor.on('beforeChange',this.codeMirrorBeforeChange.bind(this));
@@ -242,33 +272,36 @@ ${this.footerSeparator}
         } );
 
         this.evalButton = create("input", {
-            style: "margin:50px -50px 0px -150px;bottom:5%;position:absolute",
+            style: "margin:50px -50px 0px -150px;bottom:20px;position:absolute",
             type: "button",
             value: "Evaluar",
             onclick: (e) => self.executeCodeEditor()
             
         });
 
+        this.sampleDropDown = create("dropdown", {
+            style: "margin:50px -50px 0px -260px;bottom:20px;position:absolute",
+        });
+        
         this.sampleButton = create("input", {
-            style: "margin:50px -50px 0px -260px;bottom:5%;position:absolute",
+            
             type: "button",
             value: "Ejemplos",
             onclick : function(evt){
                 self.samplesMenu.style.display = "block";
-                self.samplesMenu.style.margin = self.sampleButton.style.margin;
-                self.samplesMenu.style.bottom = self.sampleButton.style.bottom;
             }
         });
 
         this.samplesMenu = buildSamplesMenu(this.samples);
+        this.sampleDropDown.appendChild(this.sampleButton);
+        this.sampleDropDown.appendChild(this.samplesMenu);
 
 
         this.verticalSeparator.appendChild(this.buttonViewCode);
         this.verticalSeparator.appendChild(this.buttonViewBoth);
         this.verticalSeparator.appendChild(this.buttonViewGraph);
         this.verticalSeparator.appendChild(this.evalButton);
-        this.verticalSeparator.appendChild(this.sampleButton);
-        this.verticalSeparator.appendChild(this.samplesMenu);
+        this.verticalSeparator.appendChild(this.sampleDropDown);
         
         this.graphContainer = create("div", {style : `display:inline-block;width:48%;height:${h};`});
 
@@ -276,6 +309,7 @@ ${this.footerSeparator}
 
         this.enumerablePropertiesCheck = d.createElement("input");
         this.enumerablePropertiesCheck.type = "checkbox";
+
         addRow(this.controls, "Todas las propiedades enumerables", this.enumerablePropertiesCheck );
 
         this.toStringCheck = d.createElement("input");
@@ -290,7 +324,11 @@ ${this.footerSeparator}
         this.prototypeCheck.type = "checkbox";
         addRow(this.controls, "Herencia (<code>prototype</code>, <code>[[prototype]]</code> y <code>constructor</code>)", this.prototypeCheck );
 
-        
+        [this.enumerablePropertiesCheck, this.toStringCheck, this.otherPropertiesText, this.prototypeCheck].forEach(
+            (a) =>  a.onchange = (e) =>{
+                this.updateGuiExtractorsCode();
+            }
+        );
 
 
         container.appendChild(this.verticalSeparator);
@@ -317,6 +355,39 @@ ${this.footerSeparator}
             return false;
         }
         return true;
+    }
+
+
+    guiExtractorsCode(){
+        let ret = "";
+
+        if( !this.prototypeCheck ){
+            return ret;
+        }
+        
+        if(this.prototypeCheck.checked ){
+            ret += 'graph.extractors.push(objGraph.PrototypeExtractor)\n';
+            ret += 'graph.extractors.push("prototype");\n';
+            ret += 'graph.extractors.push("constructor");\n';
+        }
+
+        if(this.toStringCheck.checked ){
+            ret += 'graph.extractors.push(objGraph.ToStringExtractor);\n';
+        }
+
+        if(this.enumerablePropertiesCheck.checked) {
+            ret += 'graph.extractors.push(objGraph.EnumerablePropertiesExtractor)';
+        }
+
+        this.otherPropertiesText.value.
+            split(/[\s,]+/).
+            forEach( p => {if( p != "" ) ret += `graph.extractors.push("${p}");\n`} );
+
+        if( ret != "" ){
+            ret = "if( !Array.isArray(graph.extractors) ) graph.extractors = [];\n" + ret;
+        }
+        
+        return ret;
     }
 
 
@@ -350,31 +421,8 @@ ${this.footerSeparator}
         
         const editor = this.codeMirrorEditor;
 
-        const guiExtractorsCode = () => {
-            let ret = "";
-            if(this.prototypeCheck.checked ){
-                ret += 'graph.extractors.push(objGraph.PrototypeExtractor)\n';
-                ret += 'graph.extractors.push("prototype");\n';
-                ret += 'graph.extractors.push( new objGraph.OwnPropertiesExtractor(["constructor"]) );\n';
-            }
 
-            if(this.toStringCheck.checked ){
-                ret += 'graph.extractors.push(objGraph.ToStringExtractor);\n';
-            }
-
-            this.otherPropertiesText.value.
-                split(/[\s,]+/).
-                forEach( p => {if( p != "" ) ret += `graph.extractors.push("${p}");\n`} );
-
-            return ret;
-        }
-
-        const code = `
-             ${editor.getValue()}
-             ;
-             ${guiExtractorsCode()}
-             ;
-        `;
+        const code = editor.getValue();
 
         console.log(code);
         

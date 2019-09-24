@@ -5,7 +5,7 @@ const objGraph = (
 
         const ret = {};
         function log(s){
-            //console.log(s);
+            console.log(s);
         }
 
         class Extractor{
@@ -29,12 +29,19 @@ const objGraph = (
                     "[[EnumerableProperties]]" : EnumerablePropertiesExtractor
                 };
 
-                if( map[s] != undefined ){
+                if( map[s] != undefined && Object.prototype.hasOwnProperty.call(map, s) ){
+                    console.log( s + " está en el map: " + map[s] );
                     return map[s];
                 }
-                
+
+                console.log(s + " no está en el map" );
                 return new PropertiesExtractor([s]);
             }
+
+            toString(){
+                return `${this.constructor.name}`;
+            }
+
         }
         ret.Extractor = Extractor;
         
@@ -47,6 +54,7 @@ const objGraph = (
                     return filtered;
                 });
             }
+
         }
         ret.PropertiesExtractor = PropertiesExtractor;
         
@@ -284,16 +292,25 @@ const objGraph = (
             constructor(objects,extractors,nominator,filter,maxLevel){
                 this._objects = objects;
                 log( "ObjGraph: objects:" + objects );
-                extractors = extractors.map( function(e){
+                let processedExtractors = extractors.map( e => {
                     if( typeof e == "string" ){
-                        return Extractor.FromString(e);
+                        const ret = Extractor.FromString(e);
+                        console.log( `${e} --> ${ret}`)
+                        return ret;
                     }
                     else{
+                        console.log( `${e} --> ${e}  : se queda igual`)
                         return e;
                     }
                     
                 });
-                this._extractors = extractors;
+
+                for( let i = 0 ; i < extractors.length ; i++ ){
+                    console.log( i + ":" + extractors[i] );
+                    console.log( processedExtractors[i] );
+                }
+                
+                this._extractors = processedExtractors;
                 this._nominator = nominator || DefaultNominator;
                 this._maxLevel = maxLevel || 4;
 
@@ -360,6 +377,7 @@ const objGraph = (
                 if( list && includeSubproperties ){
                     const newObjects = [];
                     this.extractors.map( function(e){
+                        console.log("Extrayendo con:" );
                         e.extract(o).forEach( function(nameAndTo){
                             if( nameAndTo ){
                                 const name = nameAndTo[0];
@@ -435,7 +453,8 @@ const objGraph = (
                             data : {
                                 label: label,
                                 source: "v"+fromIndex,
-                                target: "v"+toIndex
+                                target: "v"+toIndex,
+                                id: `${label}-${fromIndex}-${n.nameOf(g[i].obj)}-${toIndex}-${n.nameOf(to)}`
                             },
                         }
                         elements.push(e);
@@ -443,6 +462,9 @@ const objGraph = (
                 }
 
                 cytoscapeGraph.remove( cytoscapeGraph.filter(e=>true) );
+
+                console.log(JSON.stringify(elements,null,2));
+                
                 cytoscapeGraph.add(elements);
                 
             }
@@ -529,7 +551,7 @@ const objGraph = (
             const level = config.level || 5;
             const filter = config.filter;
 
-            log("createObjGraph: extractors:" + extractors );
+            console.log("createObjGraph: extractors:" + extractors );
             
             with(objGraph){
                 let objects;
