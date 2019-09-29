@@ -602,7 +602,7 @@ class Perro extends Animal{
 }
 
 let mascota = new Perro("Pancho");
-objGraph.scope = [mascota];
+graph.scope = [mascota];
                  `
                 },
                 {
@@ -610,7 +610,7 @@ objGraph.scope = [mascota];
                     code:
                 `
 let scope = ["a","b","c",[1,2,[3,4,5],6,7],"d"];
-objGraph.scope = [scope];
+graph.scope = [scope];
                  `
                 },
                 {
@@ -653,8 +653,8 @@ list.append("A");
 list.append("B");
 list.preppend("C");
 list.append("Soy el último");
-objGraph.scope = [list];
-objGraph.extractors = ["first","last","data","next","previous"];         
+graph.scope = [list];
+graph.extractors = ["first","last","data","next","previous"];         
 `
                 }
             ];

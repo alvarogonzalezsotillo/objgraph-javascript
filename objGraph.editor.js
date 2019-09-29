@@ -296,6 +296,21 @@ ${this.guiExtractorsCode()}
             }
         });
 
+        this.extractorsButton = create("input", {
+            style: "margin:50px -50px 0px -385px;bottom:20px;position:absolute",
+            type: "button",
+            value: "Extractores",
+            onclick : function(evt){
+                if( self.controls.style.display != "inline-block" ){
+                    self.controls.style.display = "inline-block";
+                }
+                else{
+                    self.controls.style.display = "none";
+                }
+            }
+        });
+
+        
         this.samplesMenu = buildSamplesMenu(this.samples);
         this.sampleDropDown.appendChild(this.sampleButton);
         this.sampleDropDown.appendChild(this.samplesMenu);
@@ -306,10 +321,19 @@ ${this.guiExtractorsCode()}
         this.verticalSeparator.appendChild(this.buttonViewGraph);
         this.verticalSeparator.appendChild(this.evalButton);
         this.verticalSeparator.appendChild(this.sampleDropDown);
+        this.verticalSeparator.appendChild(this.extractorsButton);
         
         this.graphContainer = create("div", {style : `display:inline-block;width:48%;height:${h};`});
 
-        this.controls = d.createElement("div");
+        this.controls = create( "div",{
+            style: {
+                display: "none",
+                overflow: "visible",
+                position: "absolute",
+                "z-index": 1,
+                "margin-left" : "-400px"
+            }
+        });
 
         this.enumerablePropertiesCheck = d.createElement("input");
         this.enumerablePropertiesCheck.type = "checkbox";
