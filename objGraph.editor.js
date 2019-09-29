@@ -1,4 +1,8 @@
-console.log("Cargando objGraph.editor.js");
+function log(s){
+    //console.log(s);
+}
+
+log("Cargando objGraph.editor.js");
 
 class objGraphEditor {
     constructor(container,samples) {
@@ -43,7 +47,7 @@ class objGraphEditor {
     updateGuiExtractorsCode(){
         const endOfHeader = this.lineOfSeparator(this.headerSeparator);
         const beginOfFooter = this.lineOfSeparator(this.footerSeparator);
-        console.log( `endOfHeader:${endOfHeader}  beginOfFooter:${beginOfFooter}`);
+        log( `endOfHeader:${endOfHeader}  beginOfFooter:${beginOfFooter}`);
         this.separatorEnabled = false;
         try{
             const doc = this.codeMirrorEditor.getDoc();
@@ -52,7 +56,7 @@ class objGraphEditor {
             let end = beginOfFooter-1;
             for( let line = ini; line <= end ; line++ ){
                 let theLine = doc.getLine(line);
-                console.log( `line:${line} theLine:${theLine}`);
+                log( `line:${line} theLine:${theLine}`);
                 userCode += theLine
                 if( line != ini && line < end-1 ){
                     userCode += "\n";
@@ -84,12 +88,12 @@ class objGraphEditor {
         };
         
         if( !this.separatorEnabled ){
-            console.log("beforeChange: sin habilitar"  );
+            log("beforeChange: sin habilitar"  );
             return;
         }
         
         if ( inHeader(change) || inFooter(change) ){
-            console.log("beforeChange: cancelo el cambio" );
+            log("beforeChange: cancelo el cambio" );
             change.cancel();
         }
     }
@@ -343,7 +347,7 @@ ${this.guiExtractorsCode()}
 
     checkReturn(exports){
         if( exports == null || typeof(exports) == "undefined" || exports.scope == null || typeof(exports.scope) == "undefined" ){
-            console.log("Sin exports");
+            log("Sin exports");
             let example = this.codeMirrorEditor.getDoc().getValue() + "\n// MISSING graph.scope . EXAMPLE:";
             example += objGraph.examples()[2];
             example += "\n" + this.lineSeparator;
@@ -368,7 +372,7 @@ ${this.guiExtractorsCode()}
         if(this.prototypeCheck.checked ){
             ret += 'graph.extractors.push(objGraph.PrototypeExtractor)\n';
             ret += 'graph.extractors.push("prototype");\n';
-            ret += 'graph.extractors.push("constructor");\n';
+            ret += 'graph.extractors.push(new objGraph.OwnPropertiesExtractor(["constructor"]));\n';
         }
 
         if(this.toStringCheck.checked ){
@@ -424,7 +428,7 @@ ${this.guiExtractorsCode()}
 
         const code = editor.getValue();
 
-        console.log(code);
+        log(code);
         
         const results = evaluator(code);
         if( results.error ){
@@ -466,13 +470,13 @@ ${this.guiExtractorsCode()}
                 // put depths in concentric circles if true, put depths top down if false
                 grid: false,
                 // whether to create an even grid into which the DAG is placed (circle:false only)
-                spacingFactor: 1.75,
+                spacingFactor: 1.50,
                 // positive spacing factor, larger => more space between nodes (N.B. n/a if causes overlap)
                 boundingBox: undefined,
                 // constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
                 avoidOverlap: true,
                 // prevents node overlap, may overflow boundingBox if not enough space
-                nodeDimensionsIncludeLabels: false,
+                nodeDimensionsIncludeLabels: true,
                 // Excludes the label when calculating node bounding boxes for the layout algorithm
                 roots: undefined,
                 // the roots of the trees
@@ -494,7 +498,8 @@ ${this.guiExtractorsCode()}
                 // callback on layoutstop
 
             });
-            layout.run();
+            console.log(layout);
+            //layout.run();
         }
         
         function updateCytoscape(cytoscape) {
@@ -532,7 +537,7 @@ ${this.guiExtractorsCode()}
                         shape: 'rectangle',
                         'padding': '25',
                         'border-width': '1px',
-                        'padding-relative-to': 'min',
+                        'padding-relative-to': 'max',
                         'text-valign': 'center',
                         'text-halign': 'center',
                     }
@@ -543,8 +548,9 @@ ${this.guiExtractorsCode()}
                     style: {
                         content: 'data(label)',
                         'curve-style': 'bezier',
-                        'arrow-scale' : 2,
-                        'width': 4,
+                        'control-point-step-size': 200,
+                        'arrow-scale' : 20,
+                        'width': 10,
                         'font-size': '30px',
                         'target-arrow-shape': 'triangle',
                         'line-color': '#9dbaea',
