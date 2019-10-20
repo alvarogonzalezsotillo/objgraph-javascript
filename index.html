@@ -36,6 +36,7 @@
 
         <script src="./codemirror/codemirror-5.46.0/lib/codemirror.js"></script>
         <script src="./codemirror/codemirror-5.46.0/mode/javascript/javascript.js"></script>
+        <script type="text/javascript" src="./modal-dialog.js"></script>
         <script type="text/javascript" src="./objGraph.js"></script>
         <script type="text/javascript" src="./objGraph.editor.js"></script>
 
@@ -45,6 +46,13 @@
              let c = document.getElementById("elcontainer");
              let ge1 = new objGraphEditor(c);
              window.ge1 = ge1;
+             modalDialog(
+                 [
+                     { option: "opcion1", value:"valor1" },
+                     { option: "opcion2", value:"valor2" },
+                 ],
+                 (v) => alert(v)
+             );
          }
         </script>
 
