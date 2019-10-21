@@ -3,7 +3,7 @@
 function modalDialog(options, callback){
     // options IS ARRAY of {option,value}
 
-    let d = document;
+    const d = document;
 
     
 
@@ -32,10 +32,10 @@ function modalDialog(options, callback){
     }
 
     function createMenuItem(o){
-        let option = o.option || o[0];
-        let value = o.value || o[1];
+        const option = o.option || o[0];
+        const value = o.value || o[1];
         
-        let item = create( "div", {
+        const item = create( "div", {
             style: {
             }
         });
@@ -48,7 +48,20 @@ function modalDialog(options, callback){
         return item;
     }
 
-    let background = create( "div", {
+    function eventListener(event){
+        if(event.key === "Escape") {
+            closeDialog(null);
+        }
+    }
+
+    function closeDialog(value){
+        d.removeEventListener("keydown",eventListener);
+        d.body.removeChild(background);
+        callback(value);
+    }
+
+
+    const background = create( "div", {
         style: {
             "display" : "block",
             "position": "absolute",
@@ -63,23 +76,12 @@ function modalDialog(options, callback){
         }
     });
 
-    for( let o of options ){
-        let item = createMenuItem( o );
+    for( const o of options ){
+        const item = createMenuItem( o );
         console.log(item);
         background.appendChild(item);
     }
 
-    function eventListener(event){
-        if(event.key === "Escape") {
-            closeDialog(null);
-        }
-    }
-
-    function closeDialog(value){
-        d.removeEventListener("keydown",eventListener);
-        d.body.removeChild(background);
-        callback(value);
-    }
 
     d.addEventListener("keydown", eventListener );
     d.body.appendChild(background);

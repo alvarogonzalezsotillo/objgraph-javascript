@@ -125,9 +125,6 @@ ${this.guiExtractorsCode()}
         doc.setValue( this.computeContents(code) );
         this.markCodeMirror();
         this.separatorEnabled = true;
-        if( this.samplesMenu ){
-            this.samplesMenu.style.display = "none";
-        }
     }
 
 
@@ -135,21 +132,6 @@ ${this.guiExtractorsCode()}
 
         
         const d = window.document;
-        d.addEventListener("mousedown", (event)=> {
-            // CHECK IF CLICK WAS OUTSIDE A VISIBLE MENU, TO HIDE IT
-            if( this.samplesMenu && !this.samplesMenu.contains(event.target) ){
-                this.samplesMenu.style.display = "none";
-            }
-        });
-
-        d.addEventListener("keydown", (event)=> {
-            if(event.key === "Escape") {
-                // CHECK THERE IS A VISIBLE MENU, TO HIDE IT
-                if( this.samplesMenu ){
-                    this.samplesMenu.style.display = "none";
-                }
-            }
-        });
 
         function applyStyle(elem,style){
             if( typeof style != "string" ){
@@ -187,32 +169,15 @@ ${this.guiExtractorsCode()}
 
 
         
-        const buildSamplesMenu = (samples)=>{
-            const menu = create("menu",{
-                style: {
-                    "display" : "none",
-                    "position": "absolute",
-                    //"margin": "50px -250px 0px -350px",
-                    "padding": "0px 0px 0px 0px",
-                    "top": "15px"
-                }
 
-            });
-            for( let i = 0 ; i < samples.length ; i++ ){
-                const name = samples[i].name;
-                const code = samples[i].code;
-
-                const menuItem = create("menu-item",{
-                    onclick: ()=> this.fillWithSample(code),
-                });
-
-                menuItem.innerHTML = name;
-
-                menu.appendChild(menuItem);
-            }
-            return menu;
+        const showSamplesMenu = (samples)=>{
+            console.log(samples);
+            const options = samples.map( (e) => { return { option: e.name, value: e.code} } );
+            console.log(options);
+            modalDialog(options, (code) => this.fillWithSample(code) );
+            return create("p");
         }
-        
+
 
         const self = this;
         const h = "90%";
@@ -283,16 +248,14 @@ ${this.guiExtractorsCode()}
             
         });
 
-        this.sampleDropDown = create("dropdown", {
-            style: "margin:50px -50px 0px -260px;bottom:20px;position:absolute",
-        });
         
         this.sampleButton = create("input", {
+            style: "margin:50px -50px 0px -260px;bottom:20px;position:absolute",
             
             type: "button",
             value: "Ejemplos",
-            onclick : function(evt){
-                self.samplesMenu.style.display = "block";
+            onclick : (evt) =>{
+                showSamplesMenu(this.samples);
             }
         });
 
@@ -311,16 +274,13 @@ ${this.guiExtractorsCode()}
         });
 
         
-        this.samplesMenu = buildSamplesMenu(this.samples);
-        this.sampleDropDown.appendChild(this.sampleButton);
-        this.sampleDropDown.appendChild(this.samplesMenu);
 
 
         this.verticalSeparator.appendChild(this.buttonViewCode);
         this.verticalSeparator.appendChild(this.buttonViewBoth);
         this.verticalSeparator.appendChild(this.buttonViewGraph);
         this.verticalSeparator.appendChild(this.evalButton);
-        this.verticalSeparator.appendChild(this.sampleDropDown);
+        this.verticalSeparator.appendChild(this.sampleButton);
         this.verticalSeparator.appendChild(this.extractorsButton);
         
         this.graphContainer = create("div", {style : `display:inline-block;width:48%;height:${h};`});
