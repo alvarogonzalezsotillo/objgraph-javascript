@@ -171,9 +171,7 @@ ${this.guiExtractorsCode()}
         
 
         const showSamplesMenu = (samples)=>{
-            console.log(samples);
             const options = samples.map( (e) => { return { option: e.name, value: e.code} } );
-            console.log(options);
             modalDialog(options, (code) => this.fillWithSample(code) );
             return create("p");
         }
@@ -482,7 +480,6 @@ ${this.guiExtractorsCode()}
                 // callback on layoutstop
 
             });
-            console.log(layout);
             //layout.run();
         }
         

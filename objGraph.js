@@ -444,8 +444,11 @@ const objGraph = (
                         const toIndex = find(to);
                         if( toIndex == null ){
                             console.warn("No encuentro arista:" );
+                            console.log( "--- list:");
                             console.warn(list);
-                            console.warn(edge);
+                            console.log( "--- obj:" + n.nameOf(list.obj));
+                            console.log( "--- to:" + n.nameOf(to));
+                            console.warn(to);
                             continue;
                         }
                         const label = edge.name;
